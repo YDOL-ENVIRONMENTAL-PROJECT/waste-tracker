@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useSearchParams } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/services/auth";
 
