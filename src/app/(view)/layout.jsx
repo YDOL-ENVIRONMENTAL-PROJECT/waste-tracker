@@ -5,6 +5,7 @@ import AdminSidebar from "@/components/layout/navigation/AdminSidebar";
 import ClientSidebar from "@/components/layout/navigation/ClientSidebar";
 import Footer from "@/components/layout/Footer";
 import { useAuth } from "@/hooks/useAuth";
+import { LoadingScreen } from "@/components/ui/Loading";
 
 export default function DashboardLayout({ children }) {
   const { user, isLoading } = useAuth();
@@ -20,11 +21,7 @@ export default function DashboardLayout({ children }) {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <p className="text-gray-500">Chargement...</p>
-      </div>
-    );
+    return <LoadingScreen message="Chargement..." />;
   }
 
   return (

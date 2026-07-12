@@ -9,6 +9,7 @@ import { User } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchCurrentUserProfile, updateProfile } from "@/services/user";
+import { LoadingIcon } from "@/components/ui/Loading";
 
 function readImageAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -126,8 +127,9 @@ export default function ClientProfile() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="w-full flex justify-center bg-green-50 p-10">
-        <p className="text-gray-500">Chargement du profil...</p>
+      <div className="w-full flex flex-col items-center justify-center bg-green-50 p-20 rounded-2xl">
+        <LoadingIcon size="lg" />
+        <p className="text-emerald-700 font-medium mt-6 animate-pulse">Chargement du profil...</p>
       </div>
     );
   }
