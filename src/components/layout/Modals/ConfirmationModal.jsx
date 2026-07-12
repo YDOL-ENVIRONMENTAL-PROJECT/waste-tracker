@@ -1,6 +1,6 @@
 "use client";
 
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import HelpOutlinedIcon from "@mui/icons-material/HelpOutlined";
 
 export default function ConfirmationModal({ message, onConfirm, onCancel }) {
   return (
@@ -8,7 +8,7 @@ export default function ConfirmationModal({ message, onConfirm, onCancel }) {
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center animate-scale-in">
 
         <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <HelpOutlineIcon className="text-amber-600" style={{ fontSize: 32 }} />
+          <HelpOutlinedIcon className="text-amber-600" style={{ fontSize: 32 }} />
         </div>
 
         <h2 className="text-lg font-semibold text-gray-800 mb-2">

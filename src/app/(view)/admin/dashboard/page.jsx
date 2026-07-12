@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Trash2, Truck, Users, ClipboardList } from "lucide-react";
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
-import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 
 export default function Dashboard() {
 
@@ -134,7 +134,7 @@ export default function Dashboard() {
               Chauffeur assigné
             </li>
             <li className="flex items-center gap-2">
-              <DeleteOutlineIcon className="text-red-500" fontSize="small" />
+              <DeleteOutlinedIcon className="text-red-500" fontSize="small" />
               Nouveau bac ajouté
             </li>
           </ul>

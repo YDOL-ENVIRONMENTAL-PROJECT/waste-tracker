@@ -1,6 +1,6 @@
 "use client";
 
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import ErrorOutlinedIcon from "@mui/icons-material/ErrorOutlined";
 
 export default function ErrorModal({ message, onClose }) {
   return (
@@ -8,7 +8,7 @@ export default function ErrorModal({ message, onClose }) {
       <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center animate-scale-in">
 
         <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <ErrorOutlineIcon className="text-red-600" style={{ fontSize: 32 }} />
+          <ErrorOutlinedIcon className="text-red-600" style={{ fontSize: 32 }} />
         </div>
 
         <h2 className="text-lg font-semibold text-gray-800 mb-2">
