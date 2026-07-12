@@ -1,36 +1,65 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { auth } from "@/services/auth";
 
 export default function Login() {
-
+  const router = useRouter();
   const [formData, setFormData] = useState({
     email: "",
-    password: ""
+    password: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value,
     });
+    setError(""); // Clear error when user types
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login data:", formData);
+    setIsLoading(true);
+    setError("");
+
+    const result = await auth.login(formData.email, formData.password);
+
+    if (result.success) {
+      // Store remember me preference
+      if (rememberMe && typeof window !== "undefined") {
+        localStorage.setItem("rememberEmail", formData.email);
+      }
+
+      // Redirect based on user role
+      const user = result.data;
+      if (user.role === "ADMIN" || user.role === "SUPER_ADMIN") {
+        router.push("/admin/dashboard");
+      } else if (user.role === "CLIENT") {
+        router.push("/client/dashboard");
+      } else if (user.role === "DRIVER") {
+        router.push("/driver/dashboard");
+      } else {
+        router.push("/");
+      }
+    } else {
+      setError(result.error || "Une erreur s'est produite lors de la connexion");
+    }
+
+    setIsLoading(false);
   };
 
   return (
-
     <div className="min-h-screen grid lg:grid-cols-2 bg-green-50">
-
       {/* SECTION FORMULAIRE */}
       <div className="flex items-center justify-center p-8">
-
         <div className="w-full max-w-sm">
-
           <Link
             href="/"
             className="text-green-600 font-medium mb-6 inline-block hover:underline"
@@ -39,7 +68,6 @@ export default function Login() {
           </Link>
 
           <div className="bg-white rounded-xl shadow-lg p-8">
-
             <h1 className="text-2xl font-bold text-green-600 mb-2">
               Bon retour 👋
             </h1>
@@ -48,18 +76,22 @@ export default function Login() {
               Connectez-vous pour accéder à votre tableau de bord.
             </p>
 
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-700 text-sm">{error}</p>
+              </div>
+            )}
 
+            <form onSubmit={handleSubmit} className="space-y-4">
               <input
                 type="email"
                 name="email"
-                placeholder="Nom d'utilisateur ou email"
+                placeholder="Email"
                 value={formData.email}
                 onChange={handleChange}
                 className="input-style"
                 required
-                readOnly
-                onFocus={(e) => e.target.removeAttribute('readonly')}
+                disabled={isLoading}
               />
 
               <input
@@ -70,14 +102,17 @@ export default function Login() {
                 onChange={handleChange}
                 className="input-style"
                 required
-                readOnly
-                onFocus={(e) => e.target.removeAttribute('readonly')}
+                disabled={isLoading}
               />
 
               <div className="flex justify-between text-sm">
-
                 <label className="flex items-center gap-2 text-gray-600">
-                  <input type="checkbox"/>
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    disabled={isLoading}
+                  />
                   Se souvenir
                 </label>
 
@@ -87,16 +122,15 @@ export default function Login() {
                 >
                   Mot de passe oublié ?
                 </Link>
-
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 transition"
+                disabled={isLoading}
+                className="w-full bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
               >
-                Se connecter
+                {isLoading ? "Connexion en cours..." : "Se connecter"}
               </button>
-
             </form>
 
             <p className="text-center text-gray-500 mt-6">
@@ -108,19 +142,13 @@ export default function Login() {
                 S'inscrire
               </Link>
             </p>
-
           </div>
-
         </div>
-
       </div>
-
 
       {/* SECTION IMAGE */}
       <div className="hidden lg:flex items-center justify-center bg-green-600 p-12">
-
         <div className="text-center">
-
           <img
             src="/assets/login-image.jpeg"
             alt="Waste tracker"
@@ -135,11 +163,8 @@ export default function Login() {
             Accédez à votre espace personnel pour suivre les collectes,
             recevoir les notifications et participer à un environnement plus propre.
           </p>
-
         </div>
-
       </div>
-
     </div>
   );
 }
