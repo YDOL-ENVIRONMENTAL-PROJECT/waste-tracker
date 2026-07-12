@@ -7,8 +7,11 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { Plus, ArrowUp, ArrowDown, Filter } from "lucide-react";
 import { PersonOff } from "@mui/icons-material";
+import { useAuth } from "@/hooks/useAuth";
 
-export default function DriverList({ role = "SUPER_ADMIN" }) {
+export default function DriverList() {
+  const { user } = useAuth();
+  const role = user?.role;
 
   const [search, setSearch] = useState("");
   const [filterBy, setFilterBy] = useState("ville"); // "ville" ou "site"

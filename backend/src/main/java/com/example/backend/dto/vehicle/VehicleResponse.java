@@ -18,6 +18,6 @@ public class VehicleResponse {
     private double speed;
     private VehicleStatus status;
     private UUID driverId;
-    private String driverName;
+    private String driverFullName;
     private LocalDateTime createdAt;
 }

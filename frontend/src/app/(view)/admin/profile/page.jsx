@@ -1,57 +1,118 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import EditIcon from "@mui/icons-material/Edit";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import SaveIcon from "@mui/icons-material/Save";
 import { User } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/hooks/useAuth";
+import { fetchCurrentUserProfile, updateAdminProfile } from "@/services/user";
 
 export default function AdminProfile() {
-
+  const { user: authUser, isLoading: authLoading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [admin, setAdmin] = useState(null);
 
-  const [admin, setAdmin] = useState({
-    name: "Fongang",
-    surname: "Bryan",
-    email: "fongang.bryan@gmail.com",
-    tel: "+237 699 453 207",
-    site: "Waste Tracker",
-    city: "Aucune",
-    photo: "/assets/photo de profil.jpeg"
-  });
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (authLoading) return;
+
+      try {
+        const profile = await fetchCurrentUserProfile();
+        setAdmin({
+          id: profile?.id,
+          firstName: profile?.firstName || profile?.name || "",
+          lastName: profile?.lastName || profile?.surname || "",
+          email: profile?.email || authUser?.email || "",
+          phone: profile?.phone || "",
+          site: profile?.site || "",
+          role: profile?.role || authUser?.role,
+          photo: profile?.profilePicture || "",
+        });
+      } catch (err) {
+        setError(err.message || "Impossible de charger le profil");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadProfile();
+  }, [authLoading, authUser]);
 
   const handleChange = (e) => {
     setAdmin({
       ...admin,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     });
   };
 
-  const saveChanges = () => {
-    console.log("Updated admin:", admin);
-    setIsEditing(false);
+  const saveChanges = async () => {
+    if (!admin?.id) return;
+
+    try {
+      const updated = await updateAdminProfile(admin.id, {
+        firstName: admin.firstName,
+        lastName: admin.lastName,
+        email: admin.email,
+        phone: admin.phone,
+        site: admin.site,
+        role: admin.role,
+        profilePicture: admin.photo || null,
+      });
+
+      setAdmin({
+        ...admin,
+        firstName: updated.firstName,
+        lastName: updated.lastName,
+        email: updated.email,
+        phone: updated.phone,
+        site: updated.site,
+        role: updated.role,
+        photo: updated.profilePicture || "",
+      });
+      setIsEditing(false);
+      setError("");
+    } catch (err) {
+      setError(err.message || "Impossible de mettre à jour le profil");
+    }
   };
 
+  if (authLoading || isLoading) {
+    return (
+      <div className="w-full flex justify-center bg-green-50 p-10">
+        <p className="text-gray-500">Chargement du profil...</p>
+      </div>
+    );
+  }
+
+  if (!admin) {
+    return (
+      <div className="w-full flex justify-center bg-green-50 p-10">
+        <p className="text-red-600">{error || "Profil introuvable"}</p>
+      </div>
+    );
+  }
+
   return (
-
     <div className="w-full flex justify-center bg-green-50 p-10">
-
       <div className="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-10">
-
-        {/* TITRE */}
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-10">
           Mon Profil Admin
         </h1>
 
-        {/* PHOTO */}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+            {error}
+          </div>
+        )}
+
         <div className="flex flex-col items-center mb-10">
-
           <div className="relative">
-
             <div className="w-50 h-50 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-
               {admin.photo ? (
                 <Image
                   src={admin.photo}
@@ -60,78 +121,75 @@ export default function AdminProfile() {
                   height={200}
                 />
               ) : (
-                <User size={48}/>
+                <User size={48} />
               )}
-
             </div>
 
             {isEditing && (
               <button className="absolute bottom-0 right-0 bg-green-600 text-white p-2 rounded-full shadow">
-                <EditIcon fontSize="small"/>
+                <EditIcon fontSize="small" />
               </button>
             )}
-
           </div>
-
         </div>
 
-        {/* INFOS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-xl mx-auto">
-
-          {/* USERNAME */}
           <div className="flex flex-col gap-1">
-
-            <label className="text-sm text-gray-500">
-              Nom complet
-            </label>
-
+            <label className="text-sm text-gray-500">Prénom</label>
             {isEditing ? (
               <input
                 type="text"
-                name="fullname"
-                value={`${admin.name} ${admin.surname}`}
+                name="firstName"
+                value={admin.firstName}
                 onChange={handleChange}
                 className="border rounded-lg px-3 py-2"
               />
             ) : (
               <p className="text-lg font-semibold text-gray-800">
-                {admin.name} {admin.surname}  
+                {admin.firstName}
               </p>
             )}
           </div>
 
-          {/* TEL */}
           <div className="flex flex-col gap-1">
-
-            <label className="text-sm text-gray-500">
-              Numéro de téléphone
-            </label>
-
+            <label className="text-sm text-gray-500">Nom</label>
             {isEditing ? (
               <input
                 type="text"
-                name="tel"
-                value={admin.tel}
+                name="lastName"
+                value={admin.lastName}
                 onChange={handleChange}
                 className="border rounded-lg px-3 py-2"
               />
             ) : (
               <p className="text-lg font-semibold text-gray-800">
-                {admin.tel}
+                {admin.lastName}
               </p>
             )}
           </div>
 
-          {/* EMAIL */}
           <div className="flex flex-col gap-1">
-
-            <label className="text-sm text-gray-500">
-              Adresse mail
-            </label>
-
+            <label className="text-sm text-gray-500">Numéro de téléphone</label>
             {isEditing ? (
               <input
                 type="text"
+                name="phone"
+                value={admin.phone}
+                onChange={handleChange}
+                className="border rounded-lg px-3 py-2"
+              />
+            ) : (
+              <p className="text-lg font-semibold text-gray-800">
+                {admin.phone || "—"}
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-sm text-gray-500">Adresse mail</label>
+            {isEditing ? (
+              <input
+                type="email"
                 name="email"
                 value={admin.email}
                 onChange={handleChange}
@@ -144,44 +202,34 @@ export default function AdminProfile() {
             )}
           </div>
 
-          {/* SITE */}
           <div className="flex flex-col gap-1">
-
-            <label className="text-sm text-gray-500">
-              Site administré
-            </label>
-
-            <p className="text-gray-700">
-              {admin.site}
-            </p>
-
+            <label className="text-sm text-gray-500">Site administré</label>
+            {isEditing ? (
+              <input
+                type="text"
+                name="site"
+                value={admin.site}
+                onChange={handleChange}
+                className="border rounded-lg px-3 py-2"
+              />
+            ) : (
+              <p className="text-gray-700">{admin.site || "—"}</p>
+            )}
           </div>
 
-          {/* CITY */}
           <div className="flex flex-col gap-1">
-
-            <label className="text-sm text-gray-500">
-              Ville
-            </label>
-
-            <p className="text-gray-700">
-              {admin.city}
-            </p>
-
+            <label className="text-sm text-gray-500">Rôle</label>
+            <p className="text-gray-700">{admin.role}</p>
           </div>
-
         </div>
 
-
-        {/* ACTIONS */}
         <div className="flex justify-center gap-6 mt-12">
-
           {isEditing ? (
             <button
               onClick={saveChanges}
               className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition"
             >
-              <SaveIcon/>
+              <SaveIcon />
               Enregistrer
             </button>
           ) : (
@@ -189,24 +237,20 @@ export default function AdminProfile() {
               onClick={() => setIsEditing(true)}
               className="flex items-center gap-2 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition"
             >
-              <EditIcon/>
+              <EditIcon />
               Modifier profil
             </button>
           )}
 
           <Link
-            href="/forgottenPassword"
+            href="/forgot-password"
             className="flex items-center gap-2 border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-100 transition"
           >
-            <LockResetIcon/>
+            <LockResetIcon />
             Modifier mot de passe
           </Link>
-
         </div>
-
       </div>
-
     </div>
-
   );
 }

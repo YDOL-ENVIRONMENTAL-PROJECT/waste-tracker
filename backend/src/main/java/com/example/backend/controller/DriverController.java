@@ -35,12 +35,6 @@ public class DriverController {
         return ResponseEntity.status(201).body(driverService.create(request));
     }
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Mettre à jour un chauffeur", description = "Met à jour un chauffeur")
-    public ResponseEntity<DriverResponse> update(@PathVariable UUID id, @Valid @RequestBody DriverRequest request) {
-        return ResponseEntity.ok(driverService.update(id, request));
-    }
-
     @DeleteMapping("/{id}")
     @Operation(summary = "Archiver un chauffeur", description = "Archive un chauffeur")
     public ResponseEntity<Void> archive(@PathVariable UUID id) {

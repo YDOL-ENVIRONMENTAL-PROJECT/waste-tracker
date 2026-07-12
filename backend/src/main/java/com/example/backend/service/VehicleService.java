@@ -6,12 +6,13 @@ import com.example.backend.model.Vehicle;
 import com.example.backend.model.enums.VehicleStatus;
 import com.example.backend.repository.DriverRepository;
 import com.example.backend.repository.VehicleRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 
 @Service
 @RequiredArgsConstructor
@@ -76,7 +77,7 @@ public class VehicleService {
                 .speed(vehicle.getSpeed())
                 .status(vehicle.getStatus())
                 .driverId(vehicle.getDriver() != null ? vehicle.getDriver().getId() : null)
-                .driverName(vehicle.getDriver() != null ? vehicle.getDriver().getName() : null)
+                .driverFullName(vehicle.getDriver() != null ? vehicle.getDriver().getFirstName() +" "+ vehicle.getDriver().getLastName() : null)
                 .createdAt(vehicle.getCreatedAt())
                 .build();
     }

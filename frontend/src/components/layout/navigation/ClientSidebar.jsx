@@ -4,8 +4,10 @@ import Sidebar from "../Sidebar";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import MapIcon from "@mui/icons-material/Map";
 import { Bell, MapPin, Truck } from "lucide-react";
+import { getDisplayName } from "@/services/user";
 
-export default function ClientSidebar() {
+export default function ClientSidebar({ user }) {
+  const userName = getDisplayName(user);
   const menuItems = [
     {
       href: "/client/dashboard",
@@ -37,7 +39,7 @@ export default function ClientSidebar() {
   return (
     <Sidebar
       menuItems={menuItems}
-      userName="Utilisateur"
+      userName={userName}
     />
   );
 }

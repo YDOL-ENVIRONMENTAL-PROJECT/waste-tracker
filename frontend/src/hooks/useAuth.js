@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { auth } from "@/services/auth";
+import { fetchCurrentUserProfile } from "@/services/user";
 
 /**
  * Hook to manage authentication state
@@ -11,22 +12,48 @@ export function useAuth() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Check if user is authenticated
-    const token = auth.getToken();
-    const currentUser = auth.getCurrentUser();
+    const loadUser = async () => {
+      const token = auth.getToken();
+      const currentUser = auth.getCurrentUser();
 
-    if (token && currentUser) {
-      setUser(currentUser);
-      setIsAuthenticated(true);
-    }
+      if (!token || !currentUser) {
+        setIsLoading(false);
+        return;
+      }
 
-    setIsLoading(false);
+      try {
+        const profile = await fetchCurrentUserProfile();
+        const mergedUser = { ...currentUser, ...profile };
+        setUser(mergedUser);
+        setIsAuthenticated(true);
+
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(mergedUser));
+        }
+      } catch {
+        setUser(currentUser);
+        setIsAuthenticated(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadUser();
   }, []);
 
   const login = async (email, password) => {
     const result = await auth.login(email, password);
     if (result.success) {
-      setUser(result.data);
+      try {
+        const profile = await fetchCurrentUserProfile();
+        const mergedUser = { ...result.data, ...profile };
+        setUser(mergedUser);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(mergedUser));
+        }
+      } catch {
+        setUser(result.data);
+      }
       setIsAuthenticated(true);
     }
     return result;
@@ -41,7 +68,16 @@ export function useAuth() {
   const register = async (userData) => {
     const result = await auth.register(userData);
     if (result.success) {
-      setUser(result.data);
+      try {
+        const profile = await fetchCurrentUserProfile();
+        const mergedUser = { ...result.data, ...profile };
+        setUser(mergedUser);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(mergedUser));
+        }
+      } catch {
+        setUser(result.data);
+      }
       setIsAuthenticated(true);
     }
     return result;

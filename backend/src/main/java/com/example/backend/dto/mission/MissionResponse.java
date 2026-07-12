@@ -15,9 +15,9 @@ public class MissionResponse {
     private LocalDateTime end;
     private MissionStatus status;
     private UUID driverId;
-    private String driverName;
+    private String driverFullName;
     private UUID orderedById;
-    private String orderedByName;
+    private String orderedByFullName;
     private UUID vehicleId;
     private String vehicleImmatriculation;
     private String city;

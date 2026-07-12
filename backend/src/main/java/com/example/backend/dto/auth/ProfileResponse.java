@@ -1,23 +1,27 @@
 package com.example.backend.dto.auth;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
+import com.example.backend.model.enums.AdminRole;
+import com.example.backend.model.enums.ClientType;
+import lombok.Builder;
 import lombok.Data;
 
+import java.util.UUID;
+
 @Data
-public class RegisterRequest {
-    @NotBlank
+@Builder
+public class ProfileResponse {
+    private UUID id;
+    private String userRole;
     private String accountType;
     private String firstName;
     private String lastName;
     private String name;
-    @NotBlank
-    @Email
     private String email;
-    @NotBlank
-    private String password;
     private String phone;
     private String town;
     private String quarter;
+    private String site;
     private String profilePicture;
+    private ClientType type;
+    private AdminRole role;
 }

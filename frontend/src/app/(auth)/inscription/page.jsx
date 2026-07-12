@@ -1,12 +1,24 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import { User } from "lucide-react";
 import { auth } from "@/services/auth";
+
+function readImageAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function Register() {
   const router = useRouter();
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
     accountType: "INDIVIDUAL",
     firstName: "",
@@ -18,6 +30,7 @@ export default function Register() {
     quarter: "",
     password: "",
     confirmPassword: "",
+    profilePicture: "",
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -32,6 +45,22 @@ export default function Register() {
     });
     setError("");
     setPasswordError("");
+  };
+
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const dataUrl = await readImageAsDataUrl(file);
+      setFormData({
+        ...formData,
+        profilePicture: dataUrl,
+      });
+      setError("");
+    } catch {
+      setError("Impossible de charger la photo de profil");
+    }
   };
 
   const validateForm = () => {
@@ -78,6 +107,7 @@ export default function Register() {
       town: formData.town,
       quarter: formData.quarter,
       password: formData.password,
+      profilePicture: formData.profilePicture || null,
     };
 
     const result = await auth.register(registerData);
@@ -144,6 +174,39 @@ export default function Register() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
+                  {formData.profilePicture ? (
+                    <Image
+                      src={formData.profilePicture}
+                      alt="Photo de profil"
+                      width={96}
+                      height={96}
+                      className="w-full h-full object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <User size={36} className="text-gray-400" />
+                  )}
+                </div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="hidden"
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading}
+                  className="text-sm text-green-600 font-medium hover:underline disabled:text-gray-400"
+                >
+                  {formData.profilePicture ? "Changer la photo" : "Ajouter une photo de profil"}
+                </button>
+              </div>
+
               <div className="flex gap-3">
                 <button
                   type="button"

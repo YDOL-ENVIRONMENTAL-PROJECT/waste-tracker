@@ -7,8 +7,11 @@ import AdminEditModal from "@/components/layout/Modals/AdminEditModal";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { PersonOff } from "@mui/icons-material";
+import { useAuth } from "@/hooks/useAuth";
 
-export default function AdminList({ role = "SUPER_ADMIN" }) {
+export default function AdminList() {
+  const { user } = useAuth();
+  const role = user?.role;
 
   const [search, setSearch] = useState("");
   const [cityFilter, setCityFilter] = useState("");

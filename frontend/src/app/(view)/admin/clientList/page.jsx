@@ -8,8 +8,11 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import { Filter } from "lucide-react";
 import { PersonOff } from "@mui/icons-material";
 import StarIcon from "@mui/icons-material/Star";
+import { useAuth } from "@/hooks/useAuth";
 
-export default function ClientList({ role = "ADMIN" }) {
+export default function ClientList() {
+  const { user } = useAuth();
+  const role = user?.role;
 
   const [search, setSearch] = useState("");
   const [filterBy, setFilterBy] = useState("ville");      // "ville" ou "category"

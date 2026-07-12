@@ -1,6 +1,5 @@
 package com.example.backend.controller;
 
-import com.example.backend.dto.client.ClientRequest;
 import com.example.backend.dto.client.ClientResponse;
 import com.example.backend.service.ClientService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -40,12 +39,6 @@ public class ClientController {
     @Operation(summary = "Détails d'un client", description = "Retourne les détails d'un client")
     public ResponseEntity<ClientResponse> getById(@PathVariable UUID id) {
         return ResponseEntity.ok(clientService.getById(id));
-    }
-
-    @PutMapping("/{id}")
-    @Operation(summary = "Mettre à jour un client", description = "Met à jour un client")
-    public ResponseEntity<ClientResponse> update(@PathVariable UUID id, @Valid @RequestBody ClientRequest request) {
-        return ResponseEntity.ok(clientService.update(id, request));
     }
 
     @DeleteMapping("/{id}")

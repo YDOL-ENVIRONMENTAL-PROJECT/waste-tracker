@@ -19,11 +19,11 @@ public abstract class User {
     @GeneratedValue
     private UUID id;
 
-    private String name;
     private String phone;
     private String email;
     private String password;
 
+    @Column(columnDefinition = "TEXT")
     private String profilePicture;
 
     private LocalDateTime createdAt;

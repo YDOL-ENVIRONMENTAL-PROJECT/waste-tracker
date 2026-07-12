@@ -8,12 +8,13 @@ import com.example.backend.repository.AdminRepository;
 import com.example.backend.repository.DriverRepository;
 import com.example.backend.repository.MissionRepository;
 import com.example.backend.repository.VehicleRepository;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -89,9 +90,9 @@ public class MissionService {
                 .end(mission.getEndTime())
                 .status(mission.getStatus())
                 .driverId(mission.getExecutedBy() != null ? mission.getExecutedBy().getId() : null)
-                .driverName(mission.getExecutedBy() != null ? mission.getExecutedBy().getName() : null)
+                .driverFullName(mission.getExecutedBy() != null ? mission.getExecutedBy().getFirstName() +" "+ mission.getExecutedBy().getLastName() : null)
                 .orderedById(mission.getOrderedBy() != null ? mission.getOrderedBy().getId() : null)
-                .orderedByName(mission.getOrderedBy() != null ? mission.getOrderedBy().getName() : null)
+                .orderedByFullName(mission.getOrderedBy() != null ? mission.getOrderedBy().getFirstName() +" "+ mission.getOrderedBy().getLastName() : null)
                 .vehicleId(mission.getVehicle() != null ? mission.getVehicle().getId() : null)
                 .vehicleImmatriculation(mission.getVehicle() != null ? mission.getVehicle().getImmatriculation() : null)
                 .city(mission.getCity())

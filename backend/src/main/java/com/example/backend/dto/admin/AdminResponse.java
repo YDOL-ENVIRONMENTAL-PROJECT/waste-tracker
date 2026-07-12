@@ -7,15 +7,17 @@ import lombok.Data;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+
 @Data
 @Builder
 public class AdminResponse {
     private UUID id;
-    private String name;
-    private String surname;
+    private String firstName;
+    private String lastName;
     private String email;
     private String phone;
     private String site;
+    private String profilePicture;
     private AdminRole role;
     private String status;
     private LocalDateTime createdAt;

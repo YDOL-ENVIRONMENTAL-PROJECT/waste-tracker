@@ -43,7 +43,7 @@ public class AdminController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Mettre à jour un admin", description = "Met à jour les informations d'un administrateur")
+    @Operation(summary = "Mettre à jour son profil", description = "Met à jour le profil de l'administrateur authentifié")
     public ResponseEntity<AdminResponse> update(@PathVariable UUID id, @Valid @RequestBody AdminRequest request) {
         return ResponseEntity.ok(adminService.update(id, request));
     }

@@ -16,7 +16,8 @@ import lombok.Setter;
 @AllArgsConstructor
 public class Admin extends User {
 
-    private String surname;
+    private String firstName;
+    private String lastName;
 
     @Enumerated(EnumType.STRING)
     private AdminRole role;

@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { Logout, NotificationsOutlined } from "@mui/icons-material";
 import { Search, ChevronRight } from "lucide-react";
+import { auth } from "@/services/auth";
+import { getDisplayName, getInitials } from "@/services/user";
 
 export default function Header({ user }) {
   const router = useRouter();
@@ -44,6 +46,7 @@ export default function Header({ user }) {
     "/admin/notificationCenter": "Notifications",
     "/forgottenPassword": "Mot de passe",
     "/client/dashboard": "Mon tableau de bord",
+    "/client/profile": "Mon profil",
     "/client/map": "Carte",
     "/client/notificationsCenter": "Notifications",
   };
@@ -54,7 +57,18 @@ export default function Header({ user }) {
   const parts = pathname.split("/").filter(Boolean);
   const section = parts[0] === "admin" ? "Administration" : parts[0] === "client" ? "Espace client" : "";
 
-  const roleLabel = user?.role === "SUPER_ADMIN" ? "Super Admin" : user?.role === "ADMIN" ? "Admin" : "Client";
+  const roleLabel =
+    user?.role === "SUPER_ADMIN"
+      ? "Super Admin"
+      : user?.role === "ADMIN"
+        ? "Admin"
+        : user?.role === "DRIVER"
+          ? "Chauffeur"
+          : "Client";
+
+  const displayName = getDisplayName(user);
+  const initials = getInitials(user);
+  const profileHref = pathname.startsWith("/client") ? "/client/profile" : "/admin/profile";
 
   return (
     <header className="flex justify-between items-center h-16 px-6 border-b border-gray-100 bg-white/80 backdrop-blur-md">
@@ -100,13 +114,21 @@ export default function Header({ user }) {
           >
             <div className="hidden sm:block text-right">
               <p className="text-sm font-medium text-gray-700 leading-tight">
-                {user?.name} {user?.surname}
+                {displayName}
               </p>
               <p className="text-[11px] text-gray-400">{roleLabel}</p>
             </div>
-            <div className="w-9 h-9 rounded-xl bg-green-600 text-white flex items-center justify-center text-sm font-semibold shadow-sm">
-              {user?.name?.charAt(0)}{user?.surname?.charAt(0)}
-            </div>
+            <div className="w-9 h-9 rounded-xl overflow-hidden bg-green-600 text-white flex items-center justify-center text-sm font-semibold shadow-sm">
+  {user?.profilePicture ? (
+    <img
+      src={user.profilePicture}
+      alt={displayName}
+      className="w-full h-full object-cover"
+    />
+  ) : (
+    initials
+  )}
+</div>
           </button>
 
           {/* Dropdown */}
@@ -114,12 +136,12 @@ export default function Header({ user }) {
             <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50 animate-slide-down">
               <div className="px-4 py-3 border-b border-gray-100">
                 <p className="text-sm font-semibold text-gray-800">
-                  {user?.name} {user?.surname}
+                  {displayName}
                 </p>
                 <p className="text-xs text-gray-400 truncate">{user?.email}</p>
               </div>
               <Link
-                href="/admin/profile"
+                href={profileHref}
                 onClick={() => setShowDropdown(false)}
                 className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 transition"
               >
@@ -128,7 +150,8 @@ export default function Header({ user }) {
               <button
                 onClick={() => {
                   setShowDropdown(false);
-                  router.push("/");
+                  auth.logout();
+                  router.push("/connexion");
                 }}
                 className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition w-full text-left"
               >

@@ -1,7 +1,5 @@
 package com.example.backend.model;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,6 +8,7 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 
+
 @Entity
 @Getter
 @Setter
@@ -17,8 +16,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 public class IndividualClient extends Client {
 
-    private String lastname;
-    private String surname;
+    private String firstName;
+    private String lastName;
 
     private LocalDate dateOfBirth;
 }

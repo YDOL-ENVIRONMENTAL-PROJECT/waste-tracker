@@ -6,8 +6,11 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
-export default function GarbageBinList({ role = "SUPER_ADMIN" }) {
+export default function GarbageBinList() {
+  const { user } = useAuth();
+  const role = user?.role;
 
   const [search, setSearch] = useState("");
   const [filterCity, setFilterCity] = useState("");

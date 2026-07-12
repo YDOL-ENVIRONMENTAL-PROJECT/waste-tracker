@@ -18,6 +18,7 @@ public class ClientResponse {
     private String phone;
     private String town;
     private String quarter;
+    private String profilePicture;
     private ClientType type;
     private LocalDate dateOfBirth;
     private String status;

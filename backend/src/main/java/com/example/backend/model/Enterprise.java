@@ -12,4 +12,5 @@ import lombok.Setter;
 public class Enterprise extends Client {
 
     // Rien pour l'instant (extensible plus tard)
+    private String name;
 }

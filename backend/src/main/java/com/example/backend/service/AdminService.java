@@ -4,14 +4,17 @@ import com.example.backend.dto.admin.AdminRequest;
 import com.example.backend.dto.admin.AdminResponse;
 import com.example.backend.model.Admin;
 import com.example.backend.repository.AdminRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+
 
 @Service
 @RequiredArgsConstructor
@@ -27,10 +30,17 @@ public class AdminService {
                 .collect(Collectors.toList());
     }
 
+    public AdminResponse getByEmail(String email) {
+        Admin admin = adminRepository.findByEmail(email)
+                .filter(a -> !"ARCHIVED".equals(a.getStatus()))
+                .orElseThrow(() -> new IllegalArgumentException("Admin not found"));
+        return toResponse(admin);
+    }
+
     public AdminResponse create(AdminRequest request) {
         Admin admin = new Admin();
-        admin.setName(request.getName());
-        admin.setSurname(request.getSurname());
+        admin.setFirstName(request.getFirstName());
+        admin.setLastName(request.getLastName());
         admin.setEmail(request.getEmail());
         admin.setPhone(request.getPhone());
         admin.setSite(request.getSite());
@@ -46,12 +56,20 @@ public class AdminService {
     public AdminResponse update(UUID id, AdminRequest request) {
         Admin admin = adminRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Admin not found: " + id));
-        admin.setName(request.getName());
-        admin.setSurname(request.getSurname());
+
+        String authenticatedEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+        if (!admin.getEmail().equals(authenticatedEmail)) {
+            throw new AccessDeniedException("You can only update your own profile");
+        }
+
+        admin.setFirstName(request.getFirstName());
+        admin.setLastName(request.getLastName());
         admin.setEmail(request.getEmail());
         admin.setPhone(request.getPhone());
         admin.setSite(request.getSite());
-        admin.setRole(request.getRole());
+        if (request.getProfilePicture() != null) {
+            admin.setProfilePicture(request.getProfilePicture());
+        }
         admin.setUpdatedAt(LocalDateTime.now());
         if (request.getPassword() != null && !request.getPassword().isBlank()) {
             admin.setPassword(passwordEncoder.encode(request.getPassword()));
@@ -70,11 +88,12 @@ public class AdminService {
     private AdminResponse toResponse(Admin admin) {
         return AdminResponse.builder()
                 .id(admin.getId())
-                .name(admin.getName())
-                .surname(admin.getSurname())
+                .firstName(admin.getFirstName())
+                .lastName(admin.getLastName())
                 .email(admin.getEmail())
                 .phone(admin.getPhone())
                 .site(admin.getSite())
+                .profilePicture(admin.getProfilePicture())
                 .role(admin.getRole())
                 .status(admin.getStatus())
                 .createdAt(admin.getCreatedAt())

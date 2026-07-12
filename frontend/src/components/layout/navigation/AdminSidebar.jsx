@@ -10,8 +10,10 @@ import MapIcon from '@mui/icons-material/Map';
 import { Bell } from "lucide-react"; 
 import { RecycleIcon } from "lucide-react";
 import AdminPanelSettings from "@mui/icons-material/AdminPanelSettings";
+import { getDisplayName } from "@/services/user";
 
-export default function AdminSidebar({role}) {
+export default function AdminSidebar({ role, user }) {
+  const userName = getDisplayName(user);
   const menuItems = [
     {
       href: "/admin/dashboard",
@@ -89,16 +91,9 @@ export default function AdminSidebar({role}) {
   ];
 
   return (
-    role === "ADMIN" ? (  
-      <Sidebar
-        menuItems={menuItems}
-        userName="Admin"
-      />
-    ) : (
-      <Sidebar
-        menuItems={menuItems}
-        userName="Super Admin"
-      />
-    )
+    <Sidebar
+      menuItems={menuItems}
+      userName={userName}
+    />
   );
 }

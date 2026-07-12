@@ -6,8 +6,11 @@ import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import Link from "next/link";
 import { Plus } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
-export default function VehicleList({ role = "SUPER_ADMIN" }) {
+export default function VehicleList() {
+  const { user } = useAuth();
+  const role = user?.role;
 
   const [search, setSearch] = useState("");
   const [filterBrand, setFilterBrand] = useState("");

@@ -3,6 +3,7 @@ package com.example.backend.controller;
 import com.example.backend.dto.auth.*;
 import com.example.backend.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,5 +42,19 @@ public class AuthController {
     public ResponseEntity<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
         authService.resetPassword(request);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/profile")
+    @Operation(summary = "Profil connecté", description = "Retourne le profil de l'utilisateur authentifié")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ProfileResponse> getProfile() {
+        return ResponseEntity.ok(authService.getCurrentProfile());
+    }
+
+    @PutMapping("/profile")
+    @Operation(summary = "Mettre à jour le profil", description = "Met à jour le profil du client ou chauffeur authentifié")
+    @SecurityRequirement(name = "bearerAuth")
+    public ResponseEntity<ProfileResponse> updateProfile(@Valid @RequestBody ProfileUpdateRequest request) {
+        return ResponseEntity.ok(authService.updateCurrentProfile(request));
     }
 }

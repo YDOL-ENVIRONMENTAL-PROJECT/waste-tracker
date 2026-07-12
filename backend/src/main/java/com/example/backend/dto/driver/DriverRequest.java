@@ -6,12 +6,13 @@ import lombok.Data;
 
 import java.time.LocalDate;
 
+
 @Data
 public class DriverRequest {
     @NotBlank
-    private String name;
+    private String firstName;
     @NotBlank
-    private String lastname;
+    private String lastName;
     @NotBlank
     @Email
     private String email;
@@ -20,5 +21,6 @@ public class DriverRequest {
     private String town;
     private String quarter;
     private String site;
+    private String profilePicture;
     private LocalDate dateOfBirth;
 }
