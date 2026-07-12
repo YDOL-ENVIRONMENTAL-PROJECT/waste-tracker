@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, createContext, useContext } from "react";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import { ErrorOutlined } from '@mui/icons-material';
 import InfoIcon from "@mui/icons-material/Info";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import CloseIcon from "@mui/icons-material/Close";
@@ -49,7 +49,7 @@ export function ToastProvider({ children }) {
 
 function ToastContainer({ toasts, removeToast }) {
   return (
-    <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none">
+    <div className="fixed top-4 right-4 z-9999 flex flex-col gap-3 pointer-events-none">
       {toasts.map((t) => (
         <ToastItem key={t.id} toast={t} onRemove={removeToast} />
       ))}
@@ -71,7 +71,7 @@ function ToastItem({ toast, onRemove }) {
       bar: "bg-green-500",
     },
     error: {
-      icon: <ErrorOutlineIcon fontSize="small" />,
+      icon: <ErrorOutlined fontSize="small" />,
       bg: "bg-red-50 border-red-200",
       iconColor: "text-red-600",
       bar: "bg-red-500",
@@ -94,7 +94,7 @@ function ToastItem({ toast, onRemove }) {
 
   return (
     <div
-      className={`pointer-events-auto min-w-[320px] max-w-[420px] rounded-xl border shadow-lg overflow-hidden
+      className={`pointer-events-auto min-w-[320px] max-w-105 rounded-xl border shadow-lg overflow-hidden
         ${c.bg} ${toast.exiting ? "animate-slide-out-right" : "animate-slide-in-right"}`}
     >
       <div className="flex items-start gap-3 px-4 py-3.5">
