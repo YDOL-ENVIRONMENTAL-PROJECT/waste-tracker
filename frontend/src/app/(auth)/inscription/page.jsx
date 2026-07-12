@@ -134,7 +134,7 @@ export default function Register() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2">
       {/* SECTION GAUCHE */}
-      <div className="hidden lg:flex flex-col justify-center items-center bg-gradient-to-br from-green-500 to-green-700 text-white p-16">
+      <div className="hidden lg:flex flex-col justify-center items-center bg-linear-to-br from-green-500 to-green-700 text-white p-16">
         <img
           src="/assets/create-account-image.png"
           alt="Waste collection"
