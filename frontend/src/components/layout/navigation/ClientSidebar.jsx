@@ -1,39 +1,37 @@
 "use client";
 
 import Sidebar from "../Sidebar";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import MapIcon from "@mui/icons-material/Map";
+import { Bell, MapPin, Truck } from "lucide-react";
 
 export default function ClientSidebar() {
   const menuItems = [
     {
       href: "/client/dashboard",
-      label: "Dashboard",
-      icon: "📊"
+      label: "Tableau de bord",
+      icon: <DashboardIcon style={{ fontSize: 20 }} />,
     },
     {
-      href: "/client/notifications",
+      href: "/client/map",
+      label: "Carte",
+      icon: <MapIcon style={{ fontSize: 20 }} />,
+    },
+    {
+      href: "/client/BinLocationList",
+      label: "Bacs à proximité",
+      icon: <MapPin size={20} />,
+    },
+    {
+      href: "/client/DriverList",
+      label: "Chauffeurs",
+      icon: <Truck size={20} />,
+    },
+    {
+      href: "/client/notificationsCenter",
       label: "Notifications",
-      icon: "🔔"
+      icon: <Bell size={20} />,
     },
-    {
-      href: "/client/report",
-      label: "Signaler un bac plein",
-      icon: "♻️"
-    },
-    {
-      href: "/client/vip",
-      label: "Collecte VIP",
-      icon: "⭐"
-    },
-    {
-      href: "/client/history",
-      label: "Historique",
-      icon: "📜"
-    },
-    {
-      href: "/client/profile",
-      label: "Mon Profil",
-      icon: "👤"
-    }
   ];
 
   return (

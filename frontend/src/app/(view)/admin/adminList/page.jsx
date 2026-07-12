@@ -3,7 +3,7 @@
 import { useState } from "react";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import AdminEditModal from "@/src/components/layout/Modals/AdminEditModal";
+import AdminEditModal from "@/components/layout/Modals/AdminEditModal";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { PersonOff } from "@mui/icons-material";

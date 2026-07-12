@@ -13,10 +13,6 @@ import java.time.LocalDate;
 @Entity
 @Getter
 @Setter
-@AttributeOverride(
-        name = "name",                 // le champ de la super-classe
-        column = @Column(name = "firstname")  // ← nom de colonne dans cette table
-)
 @NoArgsConstructor
 @AllArgsConstructor
 public class Driver extends User {

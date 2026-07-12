@@ -9,8 +9,8 @@ export default function Home() {
     <main className="min-h-screen bg-white">
 
       {/* NAVBAR */}
-      <header className="flex justify-between items-center px-10 py-6 shadow-sm">
-        <h1 className="text-2xl font-bold text-green-600">
+      <header className="fixed top-0 left-0 w-full flex justify-between items-center px-10 py-6 shadow-sm bg-white z-50">        
+        <h1 className="text-2xl font-bold text-green-600">  
           Waste Tracker
         </h1>
 

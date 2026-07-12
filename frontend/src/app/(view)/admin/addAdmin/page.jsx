@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import SuccessModal from "@/src/components/layout/Modals/SuccessModal";
-import ErrorModal from "@/src/components/layout/Modals/ErrorModal";
-import ConfirmationModal from "@/src/components/layout/Modals/ConfirmationModal";
+import SuccessModal from "@/components/layout/Modals/SuccessModal";
+import ErrorModal from "@/components/layout/Modals/ErrorModal";
+import ConfirmationModal from "@/components/layout/Modals/ConfirmationModal";
 
 export default function AddAdmin() {
 

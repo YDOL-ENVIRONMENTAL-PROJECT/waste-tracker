@@ -11,7 +11,7 @@ public class DriverRequest {
     @NotBlank
     private String name;
     @NotBlank
-    private String surname;
+    private String lastname;
     @NotBlank
     @Email
     private String email;

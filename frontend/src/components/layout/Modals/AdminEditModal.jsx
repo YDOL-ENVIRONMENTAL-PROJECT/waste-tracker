@@ -19,96 +19,84 @@ export default function AdminEditModal({ admin, onClose }) {
   };
 
   return (
+    <div className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in">
+      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-lg animate-scale-in">
 
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-
-      <div className="bg-white rounded-xl p-8 w-full max-w-lg">
-
-        <h2 className="text-xl font-bold mb-6">
+        <h2 className="text-lg font-semibold text-gray-800 mb-6">
           Modifier administrateur
         </h2>
 
         <div className="space-y-4">
 
           <div>
-            <label className="text-sm text-gray-500">
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
               Nom complet
             </label>
             <input
               value={`${formData.name} ${formData.surname}`}
               readOnly
-              className="border w-full rounded-lg px-3 py-2 bg-gray-100"
+              className="input w-full mt-1 bg-gray-50 cursor-not-allowed"
             />
           </div>
 
           <div>
-            <label className="text-sm text-gray-500">
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
               Téléphone
             </label>
             <input
               value={formData.phone}
               readOnly
-              className="border w-full rounded-lg px-3 py-2 bg-gray-100"
+              className="input w-full mt-1 bg-gray-50 cursor-not-allowed"
             />
           </div>
 
           <div>
-            <label className="text-sm text-gray-500">
-              adresse email
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+              Adresse email
             </label>
             <input
               value={formData.email}
               readOnly
-              className="border w-full rounded-lg px-3 py-2 bg-gray-100"
+              className="input w-full mt-1 bg-gray-50 cursor-not-allowed"
             />
           </div>
 
           <div>
-            <label className="text-sm text-gray-500">
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
               Site
             </label>
             <input
               name="site"
               value={formData.site}
               onChange={handleChange}
-              className="border w-full rounded-lg px-3 py-2"
+              className="input w-full mt-1"
             />
           </div>
 
           <div>
-            <label className="text-sm text-gray-500">
+            <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">
               Ville
             </label>
             <input
               name="city"
               value={formData.city}
               onChange={handleChange}
-              className="border w-full rounded-lg px-3 py-2"
+              className="input w-full mt-1"
             />
           </div>
 
         </div>
 
-        <div className="flex justify-end gap-4 mt-6">
-
-          <button
-            onClick={onClose}
-            className="px-4 py-2 hover:bg-red-500 hover:text-white border rounded-lg"
-          >
+        <div className="flex gap-3 mt-8">
+          <button onClick={onClose} className="btn-danger flex-1">
             Annuler
           </button>
-
-          <button
-            onClick={save}
-            className="px-4 py-2 hover:bg-green-700 bg-green-600 text-white rounded-lg"
-          >
+          <button onClick={save} className="btn-primary flex-1">
             Enregistrer
           </button>
-
         </div>
 
       </div>
-
     </div>
   );
 }

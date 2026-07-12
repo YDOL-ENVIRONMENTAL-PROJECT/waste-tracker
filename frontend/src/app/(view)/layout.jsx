@@ -1,7 +1,7 @@
-import Header from "@/src/components/layout/Header";
-import AdminSidebar from "@/src/components/layout/navigation/AdminSidebar";
-import ClientSidebar from "@/src/components/layout/navigation/ClientSidebar";
-import Footer from "@/src/components/layout/Footer";
+import Header from "@/components/layout/Header";
+import AdminSidebar from "@/components/layout/navigation/AdminSidebar";
+import ClientSidebar from "@/components/layout/navigation/ClientSidebar";
+import Footer from "@/components/layout/Footer";
 
 export default function DashboardLayout({ children }) {
 
@@ -24,20 +24,22 @@ export default function DashboardLayout({ children }) {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-gray-50">
 
-      <aside className="h-screen sticky top-0 overflow-y-auto border-r border-gray-200">
+      <aside className="h-screen sticky top-0 overflow-y-auto">
         {getSidebar()}
       </aside>
 
-      <div className="flex flex-col flex-1">
+      <div className="flex flex-col flex-1 overflow-hidden">
 
-        <header className="sticky top-0 z-10 w-full bg-white border-b border-gray-200 shadow-sm">
+        <header className="sticky top-0 z-10 w-full">
           <Header user={user} />
         </header>
 
-        <main className="p-8 flex-1 bg-gray-50">
-          {children}
+        <main className="flex-1 overflow-y-auto">
+          <div className="animate-fade-in">
+            {children}
+          </div>
         </main>
 
         <Footer />

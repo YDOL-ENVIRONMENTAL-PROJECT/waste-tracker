@@ -30,7 +30,7 @@ public class DriverService {
     public DriverResponse create(DriverRequest request) {
         Driver driver = new Driver();
         driver.setName(request.getName());
-        driver.setSurname(request.getSurname());
+        driver.setLastname(request.getLastname());
         driver.setEmail(request.getEmail());
         driver.setPhone(request.getPhone());
         driver.setTown(request.getTown());
@@ -49,7 +49,7 @@ public class DriverService {
         Driver driver = driverRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Driver not found: " + id));
         driver.setName(request.getName());
-        driver.setSurname(request.getSurname());
+        driver.setLastname(request.getLastname());
         driver.setEmail(request.getEmail());
         driver.setPhone(request.getPhone());
         driver.setTown(request.getTown());
@@ -75,7 +75,7 @@ public class DriverService {
         return DriverResponse.builder()
                 .id(driver.getId())
                 .name(driver.getName())
-                .surname(driver.getSurname())
+                .lastname(driver.getLastname())
                 .email(driver.getEmail())
                 .phone(driver.getPhone())
                 .town(driver.getTown())
