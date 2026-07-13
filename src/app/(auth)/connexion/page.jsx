@@ -29,7 +29,11 @@ export default function Login() {
     setIsLoading(true);
     setError("");
 
+    console.log("Submitting login form with data:", formData);
+
     const result = await auth.login(formData.email, formData.password);
+
+    console.log("Login response:", result);
 
     if (result.success) {
       // Store remember me preference
@@ -43,12 +47,11 @@ export default function Login() {
         router.push("/admin/dashboard");
       } else if (user.role === "CLIENT") {
         router.push("/client/dashboard");
-      } else if (user.role === "DRIVER") {
-        router.push("/driver/dashboard");
       } else {
         router.push("/");
       }
     } else {
+      console.error("Login error : ", result.error)
       setError(result.error || "Une erreur s'est produite lors de la connexion");
     }
 

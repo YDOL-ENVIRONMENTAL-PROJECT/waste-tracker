@@ -1,5 +1,5 @@
 import React from 'react';
-import { Leaf, Recycle } from 'lucide-react';
+import { Recycle } from 'lucide-react';
 
 export const LoadingIcon = ({ size = "md", className = "" }) => {
   const sizeClasses = {

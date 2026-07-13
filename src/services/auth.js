@@ -1,34 +1,16 @@
-const BASE_URL = "http://localhost:8080/api";
+import { apiClient, getErrorMessage } from "./api";
 
-/**
- * Authentication Service
- * Handles all authentication-related API calls
- */
 export const auth = {
-  /**
-   * Login user with email and password
-   * POST /api/auth/login
-   */
   login: async (email, password) => {
     try {
-      const response = await fetch(`${BASE_URL}/auth/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
+      const response = await apiClient.post("/auth/login", { email, password });
+      const data = response.data;
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Erreur de connexion");
-      }
-
-      const data = await response.json();
       const normalizedData = {
         ...data,
         role: data.role?.replace(/^ROLE_/, ""),
       };
 
-      // Store token and user info
       if (typeof window !== "undefined") {
         localStorage.setItem("token", normalizedData.token);
         localStorage.setItem("user", JSON.stringify(normalizedData));
@@ -36,34 +18,20 @@ export const auth = {
 
       return { success: true, data: normalizedData };
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: getErrorMessage(error, "Erreur de connexion") };
     }
   },
 
-  /**
-   * Register new user
-   * POST /api/auth/register
-   */
   register: async (userData) => {
     try {
-      const response = await fetch(`${BASE_URL}/auth/register`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(userData),
-      });
+      const response = await apiClient.post("/auth/register", userData);
+      const data = response.data;
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Erreur d'inscription");
-      }
-
-      const data = await response.json();
       const normalizedData = {
         ...data,
         role: data.role?.replace(/^ROLE_/, ""),
       };
 
-      // Store token and user info after successful registration
       if (typeof window !== "undefined") {
         localStorage.setItem("token", normalizedData.token);
         localStorage.setItem("user", JSON.stringify(normalizedData));
@@ -71,65 +39,32 @@ export const auth = {
 
       return { success: true, data: normalizedData };
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: getErrorMessage(error, "Erreur d'inscription") };
     }
   },
 
-  /**
-   * Request password reset
-   * POST /api/auth/forgot-password
-   */
   forgotPassword: async (email) => {
     try {
-      const response = await fetch(`${BASE_URL}/auth/forgot-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Erreur lors de la demande de réinitialisation"
-        );
-      }
-
-      const data = await response.json();
-      return { success: true, data };
+      const response = await apiClient.post("/auth/forgot-password", { email });
+      return { success: true, data: response.data };
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: getErrorMessage(error, "Erreur de réinitialisation") };
     }
   },
 
-  /**
-   * Reset password with token
-   * POST /api/auth/reset-password
-   */
   resetPassword: async (token, newPassword, confirmPassword) => {
     try {
-      const response = await fetch(`${BASE_URL}/auth/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, newPassword, confirmPassword }),
+      const response = await apiClient.post("/auth/reset-password", {
+        token,
+        newPassword,
+        confirmPassword,
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || "Erreur lors de la réinitialisation du mot de passe"
-        );
-      }
-
-      const data = await response.json();
-      return { success: true, data };
+      return { success: true, data: response.data };
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: getErrorMessage(error, "Erreur de réinitialisation du mot de passe") };
     }
   },
 
-  /**
-   * Logout user
-   */
   logout: () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("token");
@@ -137,19 +72,10 @@ export const auth = {
     }
   },
 
-  /**
-   * Get stored authentication token
-   */
   getToken: () => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("token");
-    }
-    return null;
+    return typeof window !== "undefined" ? localStorage.getItem("token") : null;
   },
 
-  /**
-   * Get current authenticated user
-   */
   getCurrentUser: () => {
     if (typeof window !== "undefined") {
       const user = localStorage.getItem("user");
@@ -158,29 +84,14 @@ export const auth = {
     return null;
   },
 
-  /**
-   * Check if user is authenticated
-   */
   isAuthenticated: () => {
-    if (typeof window !== "undefined") {
-      return !!localStorage.getItem("token");
-    }
-    return false;
+    return typeof window !== "undefined" ? !!localStorage.getItem("token") : false;
   },
 
-  /**
-   * Get authorization headers for API requests
-   */
   getAuthHeaders: () => {
     const token = auth.getToken();
-    const headers = {
-      "Content-Type": "application/json",
-    };
-
-    if (token) {
-      headers["Authorization"] = `Bearer ${token}`;
-    }
-
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
     return headers;
   },
 };
