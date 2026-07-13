@@ -51,7 +51,7 @@ export default function Login() {
         router.push("/");
       }
     } else {
-      console.error("Login error : ", result.error)
+      console.error("Login error : ", result.error);
       setError(result.error || "Une erreur s'est produite lors de la connexion");
     }
 
