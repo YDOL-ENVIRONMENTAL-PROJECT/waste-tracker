@@ -1,53 +1,68 @@
 "use client";
 
-import { useState } from "react";
-import { Filter } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Filter, Loader2 } from "lucide-react";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { garbagebins } from "@/services/garbagebin"; // Adaptez le chemin d'accès selon votre arborescence
 
 export default function GarbageBinList() {
   const { user } = useAuth();
   const role = user?.role;
 
+  // États pour la gestion des données réelles
+  const [binList, setBinList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError] = useState("");
+
   const [search, setSearch] = useState("");
   const [filterCity, setFilterCity] = useState("");
 
-  // MOCK DATA
-  const binsMock = [
-    {
-      id: 1,
-      code: "CE-A001",
-      town: "Yaoundé",
-      quarter: "Bastos",
-      createdAt: "2024-08-25",
-      photo: ""
-    },
-    {
-      id: 2,
-      code: "LI-A001",
-      town: "Douala",
-      quarter: "Akwa",
-      createdAt: "2020-09-12",
-      photo: ""
-    },
-    {
-      id: 3,
-      code: "CE-A002",
-      town: "Yaoundé",
-      quarter: "Melen",
-      createdAt: "2025-03-10",
-      photo: ""
-    }
-  ];
+  // Récupération des bacs depuis le backend au chargement du composant
+  useEffect(() => {
+    const fetchBins = async () => {
+      setIsLoading(true);
+      setApiError("");
+      
+      const result = await garbagebins.getAll();
+      
+      // 🟢 AFFICHAGE DE LA RÉPONSE BACKEND DANS LA CONSOLE
+      console.log("[Backend Response] Liste des bacs à ordures :", result);
+      
+      if (result.success) {
+        setBinList(result.data || []);
+      } else {
+        setApiError(result.error || "Impossible de charger les bacs à ordures.");
+      }
+      setIsLoading(false);
+    };
 
-  // Unique cities
-  const cities = [...new Set(binsMock.map(b => b.town))];
+    fetchBins();
+  }, []);
+
+  // Handler pour la suppression/archivage
+  const handleArchive = async (id, code) => {
+    if (confirm(`Voulez-vous vraiment archiver le bac à ordures avec le code ${code} ?`)) {
+      const result = await garbagebins.archive(id);
+      if (result.success) {
+        // Suppression visuelle instantanée de la liste locale
+        setBinList((prev) => prev.filter((bin) => bin.id !== id));
+      } else {
+        alert(result.error || "Une erreur est survenue lors de l'archivage.");
+      }
+    }
+  };
+
+  // Villes uniques calculées sur les données dynamiques
+  const cities = [...new Set(binList.map((b) => b.town).filter(Boolean))];
 
   // Format date (FR)
   const formatDate = (date) => {
+    if (!date) return "Date inconnue";
     return new Date(date).toLocaleDateString("fr-FR", {
       day: "numeric",
       month: "long",
@@ -55,15 +70,32 @@ export default function GarbageBinList() {
     });
   };
 
-  // Filter + Search
-  const filteredBins = binsMock.filter(bin => {
-    const matchesSearch = bin.code.toLowerCase().includes(search.toLowerCase());
+  // Filtrage + Recherche appliqués sur les données dynamiques
+  const filteredBins = binList.filter((bin) => {
+    const matchesSearch = (bin.code || "").toLowerCase().includes(search.toLowerCase());
     const matchesCity = filterCity === "" || bin.town === filterCity;
     return matchesSearch && matchesCity;
   });
 
+  // ÉCRAN DE CHARGEMENT TECHNIQUE (Design inchangé)
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <Loader2 className="w-10 h-10 text-green-600 animate-spin" />
+        <p className="text-gray-500 font-medium">Chargement des bacs à ordures...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8 space-y-6">
+
+      {/* RENDER DES ERREURS D'API */}
+      {apiError && (
+        <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
+          {apiError}
+        </div>
+      )}
 
       {/* SEARCH + FILTER */}
       <div className="flex flex-wrap gap-4 items-center">
@@ -74,7 +106,7 @@ export default function GarbageBinList() {
           placeholder="Rechercher par code..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="input w-64"
+          className="input w-64 border rounded-lg px-4 py-2"
         />
 
         {/* FILTER */}
@@ -86,7 +118,7 @@ export default function GarbageBinList() {
         <select
           value={filterCity}
           onChange={(e) => setFilterCity(e.target.value)}
-          className="border rounded-lg px-4 py-2 bg-green-600 text-white"
+          className="border rounded-lg px-4 py-2 bg-green-600 text-white cursor-pointer"
         >
           <option value="" className="bg-white text-black">
             Toutes les villes
@@ -112,10 +144,15 @@ export default function GarbageBinList() {
       </div>
 
       {/* LIST */}
+      {/* LIST / EMPTY STATE */}
       {filteredBins.length === 0 ? (
-
-        <div className="text-center text-gray-500 py-20">
-          Aucun bac trouvé.
+        
+        /* 🟢 AFFICHAGE VERT EN CAS DE LISTE VIDE (MÊME DESIGN QUE VEHICLE) */
+        <div className="flex flex-col items-center justify-center py-20 bg-green-50/50 rounded-2xl border-2 border-dashed border-green-300 space-y-3">
+          <DeleteOutlinedIcon className="text-green-600" style={{ fontSize: 100 }} />
+          <p className="text-green-700 font-semibold text-lg">
+            Aucun bac trouvé.
+          </p>
         </div>
 
       ) : (
@@ -130,7 +167,7 @@ export default function GarbageBinList() {
             >
 
               {/* IMAGE */}
-              <div className="w-48 h-48 bg-gray-100 flex items-center justify-center">
+              <div className="w-48 h-48 bg-gray-100 flex items-center justify-center shrink-0">
                 {bin.photo ? (
                   <img
                     src={bin.photo}
@@ -154,11 +191,11 @@ export default function GarbageBinList() {
                   </h2>
 
                   <p className="text-gray-600">
-                    <span className="font-medium">Ville:</span> {bin.town}
+                    <span className="font-medium">Ville:</span> {bin.town || "N/A"}
                   </p>
 
                   <p className="text-gray-600">
-                    <span className="font-medium">Quartier:</span> {bin.quarter}
+                    <span className="font-medium">Quartier:</span> {bin.quarter || "N/A"}
                   </p>
 
                   <p className="text-gray-500 text-sm">
@@ -168,32 +205,36 @@ export default function GarbageBinList() {
                 </div>
               </div>
 
-              {/* ACTIONS */}
-                {role === "SUPER_ADMIN" && (
-                  <div>
-                    <div className="text-green-700 mt-5 ml-4 font-medium underline">
-                      Actions
-                    </div>
-
-                    <div className="flex gap-3 mt-9 mr-6">
-
-                      <button 
-                        title="éditer"
-                        className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition"
-                      >
-                        <EditIcon fontSize="small" />
-                      </button>
-
-                      <button 
-                        title="supprimer"
-                        className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 hover:bg-red-100 text-red-600 transition"
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </button>
-
-                    </div>
+              {/* ACTIONS (Accessibles pour le rôle SUPER_ADMIN) */}
+              {(role === "SUPER_ADMIN") && (
+                <div className="flex flex-col justify-between items-end p-6">
+                  <div className="text-green-700 font-medium underline text-sm">
+                    Actions
                   </div>
-                )}
+
+                  <div className="flex gap-3 mt-auto">
+
+                    {/* EDIT LINK */}
+                    <Link 
+                      href={`/admin/editGarbageBin/${bin.id}`}
+                      title="éditer"
+                      className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition"
+                    >
+                      <EditIcon fontSize="small" />
+                    </Link>
+
+                    {/* DELETE/ARCHIVE BUTTON */}
+                    <button 
+                      onClick={() => handleArchive(bin.id, bin.code)}
+                      title="supprimer"
+                      className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 hover:bg-red-100 text-red-600 transition"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </button>
+
+                  </div>
+                </div>
+              )}
 
             </div>
 
