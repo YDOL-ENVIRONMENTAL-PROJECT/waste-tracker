@@ -3,7 +3,7 @@ import { apiClient, getErrorMessage } from "./api";
 export const vehicles = {
   getAll: async () => {
     try {
-      const response = await apiClient.get("/vehicles");
+      const response = await apiClient.get("/vehicle");
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: getErrorMessage(error, "Erreur lors de la récupération des véhicules") };
@@ -12,7 +12,7 @@ export const vehicles = {
 
   getCount: async () => {
     try {
-      const response = await apiClient.get("/vehicles/count");
+      const response = await apiClient.get("/vehicle/count");
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: getErrorMessage(error, "Erreur lors de la récupération du nombre de véhicules") };
@@ -21,7 +21,7 @@ export const vehicles = {
 
   create: async (vehicleData) => {
     try {
-      const response = await apiClient.post("/vehicles", vehicleData);
+      const response = await apiClient.post("/vehicle", vehicleData);
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: getErrorMessage(error, "Erreur lors de l'ajout du véhicule") };
@@ -30,7 +30,7 @@ export const vehicles = {
 
   update: async (id, vehicleData) => {
     try {
-      const response = await apiClient.put(`/vehicles/${id}`, vehicleData);
+      const response = await apiClient.put(`/vehicle/${id}`, vehicleData);
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: getErrorMessage(error, "Erreur lors de la mise à jour du véhicule") };
@@ -39,7 +39,7 @@ export const vehicles = {
 
   archive: async (id) => {
     try {
-      const response = await apiClient.delete(`/vehicles/${id}`);
+      const response = await apiClient.put(`/vehicle/${id}`);
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: getErrorMessage(error, "Erreur lors de l'archivage du véhicule") };

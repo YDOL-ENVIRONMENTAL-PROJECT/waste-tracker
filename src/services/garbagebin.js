@@ -3,7 +3,7 @@ import { apiClient, getErrorMessage } from "./api";
 export const garbagebins = {
   getAll: async () => {
     try {
-      const response = await apiClient.get("/bins");
+      const response = await apiClient.get("/bin");
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: getErrorMessage(error, "Erreur lors de la récupération des bacs à ordures") };
@@ -21,7 +21,7 @@ export const garbagebins = {
 
   create: async (binData) => {
     try {
-      const response = await apiClient.post("/bins", binData);
+      const response = await apiClient.post("/bin", binData);
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: getErrorMessage(error, "Erreur lors de l'ajout du bac à ordures") };
@@ -30,7 +30,7 @@ export const garbagebins = {
 
   update: async (id, binData) => {
     try {
-      const response = await apiClient.put(`/bins/${id}`, binData);
+      const response = await apiClient.put(`/bin/${id}`, binData);
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: getErrorMessage(error, "Erreur lors de la mise à jour du bac à ordures") };
@@ -39,7 +39,7 @@ export const garbagebins = {
 
   archive: async (id) => {
     try {
-      const response = await apiClient.delete(`/bins/${id}`);
+      const response = await apiClient.put(`/bin/${id}`);
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: getErrorMessage(error, "Erreur lors de l'archivage du bac à ordures.") };
