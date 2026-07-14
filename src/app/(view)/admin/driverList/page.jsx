@@ -1,17 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { Plus, ArrowUp, ArrowDown, Filter } from "lucide-react";
+import { Plus, ArrowUp, ArrowDown, Filter, Loader2 } from "lucide-react";
 import { PersonOff } from "@mui/icons-material";
 import { useAuth } from "@/hooks/useAuth";
+import { drivers } from "@/services/driver"; // Adaptez le chemin d'importation exact
 
 export default function DriverList() {
   const { user } = useAuth();
   const role = user?.role;
+
+  // États pour les données issues de l'API
+  const [driverList, setDriverList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError] = useState("");
 
   const [search, setSearch] = useState("");
   const [filterBy, setFilterBy] = useState("ville"); // "ville" ou "site"
@@ -19,100 +25,93 @@ export default function DriverList() {
   const [sortBy, setSortBy] = useState("created_at");
   const [sortOrder, setSortOrder] = useState("desc");
 
-  const driversMock = [
-    {
-      id: 1,
-      firstName: "Tasse",
-      lastName: "Arole",
-      phone: "690123456",
-      email: "jean.mba@gmail.com",
-      site: "Centre Collecte Yaoundé",
-      city: "Yaoundé",
-      district: "Bastos",
-      role: "DRIVER",
-      profile_photo: "",
-      birth_date: "1990-05-12",
-      created_at: "2024-02-12",
-      updated_at: "2024-03-12",
-      status: "ACTIVE"
-    },
-    {
-      id: 2,
-      firstName: "Rouchda",
-      lastName: "Yampen",
-      phone: "670223456",
-      email: "patrick.ngono@gmail.com",
-      site: "Centre Collecte Douala",
-      city: "Douala",
-      district: "Akwa",
-      role: "DRIVER",
-      profile_photo: "",
-      birth_date: "1987-11-02",
-      created_at: "2024-01-05",
-      updated_at: "2024-02-10",
-      status: "ACTIVE"
-    },
-    {
-      id: 3,
-      firstName: "Negou",
-      lastName: "Donald",
-      phone: "680998877",
-      email: "samuel.talla@gmail.com",
-      site: "Centre Collecte Yaoundé",
-      city: "Yaoundé",
-      district: "Emana",
-      role: "DRIVER",
-      profile_photo: "",
-      birth_date: "1993-03-20",
-      created_at: "2024-03-01",
-      updated_at: "2024-03-10",
-      status: "ACTIVE"
-    }
-  ];
+  // Récupération des données réelles
+  useEffect(() => {
+    const fetchDrivers = async () => {
+      setIsLoading(true);
+      setApiError("");
 
-  const uniqueCities = [...new Set(driversMock.map(d => d.city))];
-  const uniqueSites = [...new Set(driversMock.map(d => d.site))];
+      const result = await drivers.getAll();
+
+      // 🟢 AFFICHAGE DE LA RÉPONSE BACKEND DANS LA CONSOLE
+      console.log("[Backend Response] Liste des conducteurs :", result);
+
+      if (result.success) {
+        setDriverList(result.data || []);
+      } else {
+        setApiError(result.error || "Impossible de charger les conducteurs.");
+      }
+      setIsLoading(false);
+    };
+
+    fetchDrivers();
+  }, []);
+
+  // Action d'archivage d'un conducteur
+  const handleArchive = async (id, firstName, lastName) => {
+    if (confirm(`Voulez-vous vraiment archiver le conducteur ${firstName} ${lastName} ?`)) {
+      const result = await drivers.archive(id);
+      if (result.success) {
+        // Filtrer localement pour retirer le conducteur archivé de l'affichage
+        setDriverList((prev) => prev.filter((d) => d.id !== id));
+      } else {
+        alert(result.error || "Une erreur est survenue lors de l'archivage.");
+      }
+    }
+  };
+
+  // Villes et Sites uniques calculés dynamiquement sur les données réelles
+  const uniqueCities = [...new Set(driverList.map((d) => d.city).filter(Boolean))];
+  const uniqueSites = [...new Set(driverList.map((d) => d.site).filter(Boolean))];
   const filterOptions = filterBy === "ville" ? uniqueCities : uniqueSites;
 
-  const filteredDrivers = driversMock.filter((driver) => {
-
-    const fullName = `${driver.firstName} ${driver.lastName}`.toLowerCase();
+  // Filtrage
+  const filteredDrivers = driverList.filter((driver) => {
+    const fullName = `${driver.firstName || ""} ${driver.lastName || ""}`.toLowerCase();
     const matchesSearch = fullName.includes(search.toLowerCase());
 
-    // Filtre dynamique basé sur filterBy et filterValue
     const matchesFilter = filterValue === "" || 
       (filterBy === "ville" ? driver.city === filterValue : driver.site === filterValue);
 
     return matchesSearch && matchesFilter;
   });
 
+  // Tri
   const sortedDrivers = [...filteredDrivers].sort((a, b) => {
-
     if (sortBy === "created_at") {
-
-      const dateA = new Date(a.created_at);
-      const dateB = new Date(b.created_at);
-
-      return sortOrder === "asc"
-        ? dateA - dateB
-        : dateB - dateA;
+      const dateA = new Date(a.created_at || a.createdAt);
+      const dateB = new Date(b.created_at || b.createdAt);
+      return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
     }
 
     if (sortBy === "alphabetical") {
-
-      const nameA = `${a.firstName} ${a.lastName}`.toLowerCase();
-      const nameB = `${b.firstName} ${b.lastName}`.toLowerCase();
-
-      return sortOrder === "asc"
-        ? nameA.localeCompare(nameB)
-        : nameB.localeCompare(nameA);
+      const nameA = `${a.firstName || ""} ${a.lastName || ""}`.toLowerCase();
+      const nameB = `${b.firstName || ""} ${b.lastName || ""}`.toLowerCase();
+      return sortOrder === "asc" ? nameA.localeCompare(nameB) : nameB.localeCompare(nameA);
     }
 
     return 0;
   });
 
+  // ÉCRAN DE CHARGEMENT
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <Loader2 className="w-10 h-10 text-green-600 animate-spin" />
+        <p className="text-gray-500 font-medium">Chargement des conducteurs...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
+
+      {/* RENDER DES ERREURS D'API */}
+      {apiError && (
+        <div className="p-4 mb-6 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
+          {apiError}
+        </div>
+      )}
 
       {/* SEARCH + FILTERS */}
       <div className="flex gap-4 mb-6 flex-wrap items-center">
@@ -132,12 +131,11 @@ export default function DriverList() {
             Filtrer par:
           </span>
 
-          {/* CHOIX DU TYPE DE FILTRE */}
           <select
             value={filterBy}
             onChange={(e) => {
               setFilterBy(e.target.value);
-              setFilterValue(""); // Réinitialiser la valeur quand on change de type
+              setFilterValue("");
             }}
             className="border rounded-lg px-3 py-2 bg-white"
           >
@@ -180,7 +178,6 @@ export default function DriverList() {
               <option value="created_at">
                 Ancienneté
               </option>
-
               <option value="alphabetical">
                 Ordre alphabétique
               </option>
@@ -188,7 +185,6 @@ export default function DriverList() {
 
             {/* ORDER BUTTONS */}
             <div className="flex border rounded-lg overflow-hidden">
-
               <button
                 onClick={() => setSortOrder("asc")}
                 className={`w-9 h-9 flex items-center justify-center transition
@@ -225,10 +221,9 @@ export default function DriverList() {
         </div>
       </div>
 
-      {filteredDrivers.length === 0 ? (
+      {sortedDrivers.length === 0 ? (
 
         <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-dashed border-gray-300 shadow-sm">
-
           <div className="w-40 h-40 bg-green-50 rounded-full flex items-center justify-center mb-4">
             <PersonOff sx={{ fontSize: 80 }} className="text-green-600"/>
           </div>
@@ -248,111 +243,84 @@ export default function DriverList() {
             <Plus size={20}/>
             Ajouter un chauffeur
           </Link>
-
         </div>
 
       ) : (
 
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-100">
-
           <table className="w-full text-sm">
-
             {/* HEADER */}
             <thead className="bg-green-600 text-gray-200">
-
               <tr className="text-left">
-
                 <th className="px-6 py-4 font-semibold">
                   Nom complet
                 </th>
-
                 <th className="px-6 py-4 font-semibold">
                   Ville
                 </th>
-
                 <th className="px-6 py-4 font-semibold">
                   Quartier
                 </th>
-
                 <th className="px-6 py-4 font-semibold">
                   Téléphone
                 </th>
-
                 {role === "SUPER_ADMIN" && (
                   <th className="px-6 py-4 font-semibold text-center">
                     Actions
                   </th>
                 )}
-
               </tr>
-
             </thead>
-
 
             {/* BODY */}
             <tbody>
-
               {sortedDrivers.map((driver) => (
-
                 <tr
                   key={driver.id}
                   className="border-t border-gray-100 hover:bg-gray-50 transition"
                 >
-
                   <td className="px-6 py-4 font-medium text-gray-800">
                     {driver.firstName} {driver.lastName}
                   </td>
-
                   <td className="px-6 py-4 text-gray-600">
-                    {driver.city}
+                    {driver.city || "N/A"}
                   </td>
-
                   <td className="px-6 py-4 text-gray-600">
-                    {driver.district}
+                    {driver.district || driver.quarter || "N/A"}
                   </td>
-
                   <td className="px-6 py-4 text-gray-600">
-                    {driver.phone}
+                    {driver.phone || "N/A"}
                   </td>
 
                   {role === "SUPER_ADMIN" && (
-
                     <td className="px-6 py-4">
-
                       <div className="flex justify-center gap-3">
-
-                        <button
+                        {/* EDIT LINK */}
+                        <Link
+                          href={`/admin/editDriver/${driver.id}`}
                           title="éditer"
                           className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition"
                         >
                           <EditIcon fontSize="small"/>
-                        </button>
+                        </Link>
 
+                        {/* DELETE/ARCHIVE BUTTON */}
                         <button
+                          onClick={() => handleArchive(driver.id, driver.firstName, driver.lastName)}
                           title="archiver"
                           className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 hover:bg-red-100 text-red-600 transition"
                         >
                           <DeleteIcon fontSize="small"/>
                         </button>
-
                       </div>
-
                     </td>
-
                   )}
-
                 </tr>
-
               ))}
-
             </tbody>
-
           </table>
-
         </div>
-
       )}
-
     </div>
   );
 }

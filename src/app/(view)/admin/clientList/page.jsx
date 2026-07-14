@@ -1,71 +1,82 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { Filter } from "lucide-react";
+import { Filter, Loader2 } from "lucide-react";
 import { PersonOff } from "@mui/icons-material";
 import StarIcon from "@mui/icons-material/Star";
 import { useAuth } from "@/hooks/useAuth";
+import { clients } from "@/services/client"; // Assurez-vous que le chemin d'importation correspond à votre projet
 
 export default function ClientList() {
   const { user } = useAuth();
   const role = user?.role;
 
+  // États pour les données dynamiques de l'API
+  const [clientList, setClientList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [apiError, setApiError] = useState("");
+
   const [search, setSearch] = useState("");
   const [filterBy, setFilterBy] = useState("ville");      // "ville" ou "category"
   const [filterValue, setFilterValue] = useState("");     // valeur sélectionnée
 
-  // MOCK DATA
-  const clientsMock = [
-    {
-      id: 1,
-      type: "CLASSIC",
-      category: "INDIVIDUAL",
-      firstName: "Tchapet",
-      lastName: "Rolain",
-      email: "rtchapet@gmail.com",
-      phone: "690 123 456",
-      city: "Yaoundé",
-      profile_photo: ""
-    },
-    {
-      id: 2,
-      type: "CLASSIC",
-      category: "ENTERPRISE",
-      name: "Orange Cameroun",
-      email: "contact@orange.cm",
-      phone: "699 123 456",
-      city: "Douala",
-      profile_photo: ""
-    },
-    {
-      id: 3,
-      type: "PREMIUM",
-      category: "INDIVIDUAL",
-      firstName: "Tapamo",
-      lastName: "Stella",
-      email: "t.stella@gmail.com",
-      phone: "677 889 900",
-      city: "Yaoundé",
-      profile_photo: ""
+  // Récupération des données au montage du composant
+  useEffect(() => {
+    const fetchClients = async () => {
+      setIsLoading(true);
+      setApiError("");
+
+      const result = await clients.getAll();
+
+      // 🟢 AFFICHAGE DE LA RÉPONSE BACKEND DANS LA CONSOLE
+      console.log("[Backend Response] Liste des clients :", result);
+
+      if (result.success) {
+        setClientList(result.data || []);
+      } else {
+        setApiError(result.error || "Impossible de charger les clients.");
+      }
+      setIsLoading(false);
+    };
+
+    fetchClients();
+  }, []);
+
+  // Fonction pour gérer l'archivage/suppression d'un client
+  const handleArchive = async (id, displayName) => {
+    if (confirm(`Voulez-vous vraiment archiver le client ${displayName} ?`)) {
+      const result = await clients.archive(id);
+      if (result.success) {
+        // Mise à jour de l'état local pour retirer le client archivé
+        setClientList((prev) => prev.filter((c) => c.id !== id));
+      } else {
+        alert(result.error || "Une erreur est survenue lors de l'archivage.");
+      }
     }
-  ];
+  };
 
-  const uniqueCities = [...new Set(clientsMock.map(c => c.city))];
-  const uniqueCategories  = [...new Set(clientsMock.map(c => c.category))];
-  const uniqueTypes       = [...new Set(clientsMock.map(c => c.type))];
+  // Extraction dynamique des filtres basés sur les données de l'API
+  const uniqueCities = [...new Set(clientList.map((c) => c.city).filter(Boolean))];
+  const uniqueCategories = [...new Set(clientList.map((c) => c.category).filter(Boolean))];
+  const uniqueTypes = [...new Set(clientList.map((c) => c.type).filter(Boolean))];
 
-  const filterOptions = filterBy === "ville" ? uniqueCities : filterBy === "category" ? uniqueCategories : uniqueTypes;
+  const filterOptions =
+    filterBy === "ville"
+      ? uniqueCities
+      : filterBy === "category"
+      ? uniqueCategories
+      : uniqueTypes;
 
   // Filtrage
-  const filteredClients = clientsMock.filter((client) => {
+  const filteredClients = clientList.filter((client) => {
     // Recherche par nom
     const fullName =
       client.category === "INDIVIDUAL"
-        ? `${client.firstName} ${client.lastName}`.toLowerCase()
+        ? `${client.firstName || ""} ${client.lastName || ""}`.toLowerCase()
         : (client.name || "").toLowerCase();
 
     const matchesSearch = fullName.includes(search.toLowerCase());
@@ -73,13 +84,34 @@ export default function ClientList() {
     // Filtre dynamique
     const matchesFilter =
       filterValue === "" ||
-      (filterBy === "ville" ? client.city === filterValue : filterBy === "category" ? client.category === filterValue : client.type === filterValue);
+      (filterBy === "ville"
+        ? client.city === filterValue
+        : filterBy === "category"
+        ? client.category === filterValue
+        : client.type === filterValue);
 
     return matchesSearch && matchesFilter;
   });
 
+  // ÉCRAN DE CHARGEMENT TECHNIQUE
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-32 space-y-4">
+        <Loader2 className="w-10 h-10 text-green-600 animate-spin" />
+        <p className="text-gray-500 font-medium">Chargement des clients...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="p-8">
+
+      {/* AFFICHAGE DES ERREURS D'API */}
+      {apiError && (
+        <div className="p-4 mb-6 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
+          {apiError}
+        </div>
+      )}
 
       {/* SEARCH + FILTERS */}
       <div className="flex gap-4 mb-6 flex-wrap items-center">
@@ -114,7 +146,7 @@ export default function ClientList() {
           </select>
         </div>
 
-        {/* Valeur du filtre (villes ou categories) */}
+        {/* Valeur du filtre (villes, catégories ou types) */}
         <select
           value={filterValue}
           onChange={(e) => setFilterValue(e.target.value)}
@@ -122,13 +154,12 @@ export default function ClientList() {
           disabled={filterOptions.length === 0}
         >
           <option value="" className="bg-white text-black">
-            Toutes les {filterBy === "ville" ? "villes" : filterBy === "category" ? "categories" : "types"}
+            Toutes les {filterBy === "ville" ? "villes" : filterBy === "category" ? "catégories" : "types"}
           </option>
 
           {filterOptions.map((option) => (
             <option key={option} value={option} className="bg-white text-black">
-              {option === "INDIVIDUAL" ? "Individu" :
-               option === "ENTERPRISE"  ? "Entreprise" : option}
+              {option === "INDIVIDUAL" ? "Individu" : option === "ENTERPRISE" ? "Entreprise" : option}
             </option>
           ))}
         </select>
@@ -180,7 +211,7 @@ export default function ClientList() {
               {filteredClients.map((client) => {
                 const displayName =
                   client.category === "INDIVIDUAL"
-                    ? `${client.firstName} ${client.lastName}`
+                    ? `${client.firstName || ""} ${client.lastName || ""}`
                     : client.name || "—";
 
                 return (
@@ -191,7 +222,7 @@ export default function ClientList() {
                     {/* PHOTO / INITIAL */}
                     <td className="px-6 py-4">
                       <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-semibold">
-                        {displayName.charAt(0)}
+                        {displayName.trim().charAt(0) || "—"}
                       </div>
                     </td>
 
@@ -200,33 +231,44 @@ export default function ClientList() {
                     </td>
 
                     <td className="px-6 py-4 text-gray-600">
-                      {client.email}
+                      {client.email || "N/A"}
                     </td>
 
                     <td className="px-6 py-4 text-gray-600">
-                      {client.phone}
+                      {client.phone || "N/A"}
                     </td>
 
                     <td className="px-6 py-4 text-gray-600">
-                      {client.city}
+                      {client.city || "N/A"}
                     </td>
 
-                    {client.type === "PREMIUM" && (
-                      <td className="px-6 py-4 text-gray-600">
+                    <td className="px-6 py-4 text-gray-600">
+                      {client.type === "PREMIUM" && (
                         <StarIcon 
                           fontSize="small" 
-                          className="text-amber-500"  // ou gold, yellow-500, etc.
+                          className="text-amber-500"
                         />
-                      </td>
-                    )}
+                      )}
+                    </td>
 
                     {role === "SUPER_ADMIN" && (
                       <td className="px-6 py-4">
                         <div className="flex justify-center gap-3">
-                          <button className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition">
+                          {/* EDIT BUTTON */}
+                          <Link
+                            href={`/admin/editClient/${client.id}`}
+                            className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition"
+                            title="éditer"
+                          >
                             <EditIcon fontSize="small" />
-                          </button>
-                          <button className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 hover:bg-red-100 text-red-600 transition">
+                          </Link>
+
+                          {/* ARCHIVE BUTTON */}
+                          <button
+                            onClick={() => handleArchive(client.id, displayName)}
+                            className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 hover:bg-red-100 text-red-600 transition"
+                            title="supprimer"
+                          >
                             <DeleteIcon fontSize="small" />
                           </button>
                         </div>
