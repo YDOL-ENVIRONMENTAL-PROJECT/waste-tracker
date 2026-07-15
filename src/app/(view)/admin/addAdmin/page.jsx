@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import SuccessModal from "@/components/layout/Modals/SuccessModal";
 import ErrorModal from "@/components/layout/Modals/ErrorModal";
 import ConfirmationModal from "@/components/layout/Modals/ConfirmationModal";
+import { admins } from "@/services/admin";
 
 export default function AddAdmin() {
 
@@ -12,6 +13,8 @@ export default function AddAdmin() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [generatedPassword, setGeneratedPassword] = useState("");
 
   const [formData, setFormData] = useState({
     firstName: "",
@@ -19,7 +22,6 @@ export default function AddAdmin() {
     phone: "",
     email: "",
     site: "",
-    city: "",
     role: "ADMIN",
   });
 
@@ -36,14 +38,42 @@ export default function AddAdmin() {
     setShowConfirmation(true);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     setShowConfirmation(false);
-    try {
-      console.log("Admin created :", formData);
+    setIsSubmitting(true);
 
-      setShowSuccess(true);
+    const tempPassword = Math.random().toString(36).slice(2, 10);
+    try {
+      const payload = {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        email: formData.email,
+        site: formData.site,
+        role: formData.role,
+        profilePicture: null,
+        status: "OFFLINE",
+        password: tempPassword,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const result = await admins.create(payload);
+
+      if (result.success) {
+        console.log("Admin created :", result.data);
+
+        setGeneratedPassword(tempPassword);
+        setShowSuccess(true);
+      } else {
+        console.error("Error creating admin:", result.error);
+        setShowError(true);
+      }  
     } catch (error) {
+      console.error("Error creating admin:", error);
       setShowError(true);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -158,26 +188,6 @@ export default function AddAdmin() {
 
             </div>
 
-
-            {/* VILLE */}
-            <div className="flex flex-col gap-1">
-
-              <label className="text-sm text-gray-600">
-                Ville
-              </label>
-
-              <input
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={handleChange}
-                required
-                className="border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"
-              />
-
-            </div>
-
-
             {/* ROLE */}
             <div className="flex flex-col gap-1">
 
@@ -242,7 +252,22 @@ export default function AddAdmin() {
 
       {showSuccess && (
         <SuccessModal
-          message="L'administrateur a été créé avec succès !"
+          message={
+            <div className="space-y-4">
+              <p>L'administrateur a été créé avec succès !</p>
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
+                <span className="block text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">
+                  Mot de passe généré par défaut
+                </span>
+                <span className="text-lg font-mono font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded select-all border border-emerald-100">
+                  {generatedPassword}
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 italic">
+                Pensez à copier ce mot de passe pour le transmettre au nouvel administrateur.
+              </p>
+            </div>
+          }
           onClose={() => {
             setShowSuccess(false);
             router.push("/admin/adminList");

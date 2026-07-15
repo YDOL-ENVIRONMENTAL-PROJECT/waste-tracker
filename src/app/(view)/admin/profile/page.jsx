@@ -23,7 +23,14 @@ export default function AdminProfile() {
       if (authLoading) return;
 
       try {
-        const profile = await fetchCurrentUserProfile();
+        console.log("[API GET Request] Triggered - get admin profile");
+
+        const response = await fetchCurrentUserProfile();
+
+        console.log("[API GET Response] admin profile:", response);
+
+        const profile = response?.data || response;
+        
         setAdmin({
           id: profile?.id,
           firstName: profile?.firstName || profile?.name || "",

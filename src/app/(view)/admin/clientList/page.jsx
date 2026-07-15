@@ -60,7 +60,7 @@ export default function ClientList() {
   };
 
   // Extraction dynamique des filtres basés sur les données de l'API
-  const uniqueCities = [...new Set(clientList.map((c) => c.city).filter(Boolean))];
+  const uniqueCities = [...new Set(clientList.map((c) => c.town).filter(Boolean))];
   const uniqueCategories = [...new Set(clientList.map((c) => c.category).filter(Boolean))];
   const uniqueTypes = [...new Set(clientList.map((c) => c.type).filter(Boolean))];
 
@@ -85,7 +85,7 @@ export default function ClientList() {
     const matchesFilter =
       filterValue === "" ||
       (filterBy === "ville"
-        ? client.city === filterValue
+        ? client.town === filterValue
         : filterBy === "category"
         ? client.category === filterValue
         : client.type === filterValue);
@@ -239,7 +239,7 @@ export default function ClientList() {
                     </td>
 
                     <td className="px-6 py-4 text-gray-600">
-                      {client.city || "N/A"}
+                      {client.town || "N/A"}
                     </td>
 
                     <td className="px-6 py-4 text-gray-600">

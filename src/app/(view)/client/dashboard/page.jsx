@@ -22,7 +22,7 @@ export default function ClientDashboard() {
         </div>
       </div>
 
-      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 min-h-[300px] flex flex-center items-center justify-center text-gray-400">
+      <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 min-h-75 flex flex-center items-center justify-center text-gray-400">
         <p>Historique des collectes et activités à venir</p>
       </div>
     </div>

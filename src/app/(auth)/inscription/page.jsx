@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { User } from "lucide-react";
+import { User, Calendar } from "lucide-react";
 import { auth } from "@/services/auth";
 
 function readImageAsDataUrl(file) {
@@ -23,6 +23,7 @@ export default function Register() {
     accountType: "INDIVIDUAL",
     firstName: "",
     lastName: "",
+    dateOfBirth: "",
     name: "",
     email: "",
     phone: "",
@@ -69,6 +70,10 @@ export default function Register() {
         setError("Le prénom et le nom sont requis pour un compte particulier");
         return false;
       }
+      if (!formData.dateOfBirth.trim()) {
+        setError("La date de naissance est requise pour un compte particulier");
+        return false;
+      }
     } else if (!formData.name.trim()) {
       setError("Le nom de l'entreprise est requis pour un compte entreprise");
       return false;
@@ -101,6 +106,7 @@ export default function Register() {
       accountType: formData.accountType,
       firstName: formData.firstName,
       lastName: formData.lastName,
+      dateOfBirth: formData.accountType === "INDIVIDUAL" ? formData.dateOfBirth : null,
       name: formData.accountType === "ENTERPRISE" ? formData.name : "",
       email: formData.email,
       phone: formData.phone,
@@ -113,17 +119,7 @@ export default function Register() {
     const result = await auth.register(registerData);
 
     if (result.success) {
-      // Redirect to appropriate dashboard based on role
-      const user = result.data;
-      if (user.role === "ADMIN" || user.role === "SUPER_ADMIN") {
-        router.push("/admin/dashboard");
-      } else if (user.role === "CLIENT") {
-        router.push("/client/dashboard");
-      } else if (user.role === "DRIVER") {
-        router.push("/driver/dashboard");
-      } else {
-        router.push("/");
-      }
+      router.push("/connexion");
     } else {
       setError(result.error || "Une erreur s'est produite lors de l'inscription");
     }
@@ -225,28 +221,76 @@ export default function Register() {
               </div>
 
               {formData.accountType === "INDIVIDUAL" ? (
-                <div className="grid grid-cols-2 gap-4">
-                  <input
-                    type="text"
-                    name="firstName"
-                    placeholder="Prénom"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    className="input-style"
-                    required
-                    disabled={isLoading}
-                  />
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      name="firstName"
+                      placeholder="Prénom"
+                      value={formData.firstName}
+                      onChange={handleChange}
+                      className="input-style"
+                      required
+                      disabled={isLoading}
+                    />
 
-                  <input
-                    type="text"
-                    name="lastName"
-                    placeholder="Nom"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    className="input-style"
-                    required
-                    disabled={isLoading}
-                  />
+                    <input
+                      type="text"
+                      name="lastName"
+                      placeholder="Nom"
+                      value={formData.lastName}
+                      onChange={handleChange}
+                      className="input-style"
+                      required
+                      disabled={isLoading}
+                    />
+                  </div>
+
+                  <div className="relative group">
+                    {/* ICÔNE DE CALENDRIER */}
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 z-10">
+                      <Calendar size={18} />
+                    </div>
+
+                    {/* INPUT DATE */}
+                    <input
+                      type="date"
+                      name="birthDate"
+                      value={formData.birthDate}
+                      onChange={handleChange}
+                      required
+                      disabled={isLoading}
+                      max={new Date().toISOString().split("T")[0]}
+                      className="peer w-full pl-11 pr-4 pt-5 pb-1.5 rounded-lg border border-gray-300 outline-hidden focus:border-green-600 focus:ring-2 focus:ring-green-100 transition text-gray-700 text-sm cursor-pointer 
+                        [&::-webkit-calendar-picker-indicator]:cursor-pointer 
+                        [&::-webkit-calendar-picker-indicator]:filter 
+                        [&::-webkit-calendar-picker-indicator]:hue-rotate-60
+                        
+                        /* Masque le format dd/mm/yyyy initialement, et l'affiche uniquement quand l'input est focus ou possède une valeur */
+                        [&::-webkit-datetime-edit]:opacity-0
+                        focus:[&::-webkit-datetime-edit]:opacity-100
+                        [:not(:placeholder-shown)+&]:[&::-webkit-datetime-edit]:opacity-100
+                        [html:not([data-empty])+&]:[&::-webkit-datetime-edit]:opacity-100      /* Gestion pour Firefox et autres navigateurs */
+                        required:invalid:[&::-webkit-datetime-edit]:opacity-0
+                        focus:invalid:[&::-webkit-datetime-edit]:opacity-100
+                      "
+                      // Cet attribut fictif permet à CSS de savoir si l'input a une valeur
+                      placeholder=" " 
+                    />
+
+                    {/* LABEL FLOTTANT (Sert de placeholder, monte en haut à gauche lors du focus ou s'il y a une valeur) */}
+                    <label
+                      className="absolute left-11 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none transition-all duration-200
+                        peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
+                        peer-focus:top-2.5 peer-focus:text-xs peer-focus:text-green-600
+                        
+                        /* Reste en haut si l'input contient du texte */
+                        peer-valid:top-2.5 peer-valid:text-xs peer-valid:text-green-600
+                        peer-not-placeholder-shown:top-2.5 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:text-green-600"
+                    >
+                      Date de naissance
+                    </label>
+                  </div>
                 </div>
               ) : (
                 <input

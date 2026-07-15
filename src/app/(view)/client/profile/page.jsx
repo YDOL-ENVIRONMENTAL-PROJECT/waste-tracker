@@ -28,33 +28,47 @@ export default function ClientProfile() {
   const [client, setClient] = useState(null);
   const fileInputRef = useRef(null);
 
+  // 🟢 FONCTION UNIQUE DE RÉCUPÉRATION (GET)
+  const loadProfile = async () => {
+    if (authLoading) return;
+
+    try {
+      console.log("[API GET Request] Triggered - get user profile");
+      
+      const response = await fetchCurrentUserProfile();
+      
+      console.log("[API GET Response] user profile:", response);
+
+      const profile = response?.data || response;
+
+      setClient({
+        id: profile?.id,
+        accountType: profile?.accountType || "INDIVIDUAL",
+        firstName: profile?.firstName || "",
+        lastName: profile?.lastName || "",
+        name: profile?.name || "",
+        email: profile?.email || authUser?.email || "",
+        phone: profile?.phone || "",
+        town: profile?.town || "",
+        quarter: profile?.quarter || "",
+        type: profile?.type || "CLASSIC",
+        photo: profile?.profilePicture || "",
+      });
+    } catch (err) {
+      console.error("[API GET Error] Failed to fetch profile:", err);
+      setError(err.message || "Impossible de charger le profil");
+    }
+  };
+
+  // Chargement initial au montage du composant
   useEffect(() => {
-    const loadProfile = async () => {
+    const initialize = async () => {
       if (authLoading) return;
-
-      try {
-        const profile = await fetchCurrentUserProfile();
-        setClient({
-          id: profile?.id,
-          accountType: profile?.accountType || "INDIVIDUAL",
-          firstName: profile?.firstName || "",
-          lastName: profile?.lastName || "",
-          name: profile?.name || "",
-          email: profile?.email || authUser?.email || "",
-          phone: profile?.phone || "",
-          town: profile?.town || "",
-          quarter: profile?.quarter || "",
-          type: profile?.type || "CLASSIC",
-          photo: profile?.profilePicture || "",
-        });
-      } catch (err) {
-        setError(err.message || "Impossible de charger le profil");
-      } finally {
-        setIsLoading(false);
-      }
+      setIsLoading(true);
+      await loadProfile();
+      setIsLoading(false);
     };
-
-    loadProfile();
+    initialize();
   }, [authLoading, authUser]);
 
   const handleChange = (e) => {
@@ -79,8 +93,13 @@ export default function ClientProfile() {
     }
   };
 
+  // 🟢 ENREGISTREMENT ET CHARGEMENT TRANSITIONNEL
   const saveChanges = async () => {
     if (!client?.id) return;
+
+    // Début du chargement visible à l'écran
+    setIsLoading(true);
+    setError("");
 
     try {
       const payload =
@@ -103,32 +122,29 @@ export default function ClientProfile() {
               profilePicture: client.photo || null,
             };
 
-      const updated = await updateProfile(payload);
+      // 1. LOG ET APPEL DU PUT (UPDATE)
+      console.log("[API PUT Request] Triggered - update user profile with payload:", payload);
 
-      setClient({
-        ...client,
-        accountType: updated.accountType || client.accountType,
-        firstName: updated.firstName || "",
-        lastName: updated.lastName || "",
-        name: updated.name || "",
-        email: updated.email,
-        phone: updated.phone,
-        town: updated.town,
-        quarter: updated.quarter,
-        type: updated.type,
-        photo: updated.profilePicture || "",
-      });
+      const updateResponse = await updateProfile(payload);
+
+      console.log("[API PUT Response] update response:", updateResponse);
+
+      await loadProfile();
+
       setIsEditing(false);
-      setError("");
     } catch (err) {
+      console.error("[API Process Error] Failed during update/re-fetch sequence:", err);
       setError(err.message || "Impossible de mettre à jour le profil");
+    } finally {
+      // Fin du chargement
+      setIsLoading(false);
     }
   };
 
   if (authLoading || isLoading) {
     return (
-      <div className="w-full flex flex-col items-center justify-center bg-green-50 p-20 rounded-2xl">
-        <LoadingIcon size="lg" />
+      <div className="w-full flex flex-col items-center justify-center bg-green-200 p-20 rounded-2xl">
+        <LoadingIcon size="lg" className="text-green-500" />
         <p className="text-emerald-700 font-medium mt-6 animate-pulse">Chargement du profil...</p>
       </div>
     );
