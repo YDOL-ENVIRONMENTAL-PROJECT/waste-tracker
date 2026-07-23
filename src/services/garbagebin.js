@@ -12,7 +12,7 @@ export const garbagebins = {
 
   getCount: async () => {
     try {
-      const response = await apiClient.get("/bins/count");
+      const response = await apiClient.get("/bin/count");
       return { success: true, data: response.data };
     } catch (error) {
       return { success: false, error: getErrorMessage(error, "Erreur lors de la récupération du nombre de bacs à ordures") };

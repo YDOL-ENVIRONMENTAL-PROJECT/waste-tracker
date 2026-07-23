@@ -252,7 +252,7 @@ export default function AdminProfile() {
           )}
 
           <Link
-            href="/forgot-password"
+            href="/update-password"
             className="flex items-center gap-2 border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-100 transition"
           >
             <LockResetIcon />

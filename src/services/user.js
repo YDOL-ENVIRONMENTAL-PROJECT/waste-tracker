@@ -41,19 +41,21 @@ function normalizeAdmin(admin, authUser) {
 }
 
 export function getDisplayName(user) {
-  if (!user) return "Utilisateur";
-  if (user.firstName || user.lastName) {
-    return `${user.firstName || ""} ${user.lastName || ""}`.trim();
+  const currentUser = user.data;
+  if (!currentUser) return "Utilisateur";
+  if (currentUser.firstName || currentUser.lastName) {
+    return `${currentUser.firstName || ""} ${currentUser.lastName || ""}`.trim();
   }
   if (user.name) {
-    return `${user.name} ${user.surname || ""}`.trim();
+    return `${currentUser.name}`.trim();
   }
-  return user.email?.split("@")[0] || "Utilisateur";
+  return currentUser.email?.split("@")[0] || "Utilisateur";
 }
 
 export function getInitials(user) {
-  const first = user?.firstName || user?.name || "";
-  const last = user?.lastName || user?.surname || "";
+  const currentUser = user.data;
+  const first = currentUser?.firstName || currentUser?.name || "";
+  const last = currentUser?.lastName || "";
   if (first && last) return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
   if (first) return first.charAt(0).toUpperCase();
   return "U";

@@ -119,16 +119,16 @@ export default function Header({ user }) {
               <p className="text-[11px] text-gray-400">{roleLabel}</p>
             </div>
             <div className="w-9 h-9 rounded-xl overflow-hidden bg-green-600 text-white flex items-center justify-center text-sm font-semibold shadow-sm">
-  {user?.profilePicture ? (
-    <img
-      src={user.profilePicture}
-      alt={displayName}
-      className="w-full h-full object-cover"
-    />
-  ) : (
-    initials
-  )}
-</div>
+              {user?.profilePicture ? (
+                <img
+                  src={user.profilePicture}
+                  alt={displayName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                initials
+              )}
+            </div>
           </button>
 
           {/* Dropdown */}
