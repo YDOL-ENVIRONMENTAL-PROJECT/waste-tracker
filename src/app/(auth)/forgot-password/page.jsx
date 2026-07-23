@@ -31,7 +31,7 @@ export default function ForgotPassword() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-green-50">
       {/* SECTION FORMULAIRE */}
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-sm">
           <Link
             href="/connexion"
@@ -40,7 +40,7 @@ export default function ForgotPassword() {
             ← Retour à la connexion
           </Link>
 
-          <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
             <h1 className="text-2xl font-bold text-green-600 mb-2">
               Mot de passe oublié
             </h1>

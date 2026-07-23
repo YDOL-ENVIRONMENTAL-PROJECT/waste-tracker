@@ -61,7 +61,7 @@ export default function Login() {
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-green-50">
       {/* SECTION FORMULAIRE */}
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-sm">
           <Link
             href="/"
@@ -155,7 +155,7 @@ export default function Login() {
           <img
             src="/assets/login-image.jpeg"
             alt="Waste tracker"
-            className="w-100 mx-auto rounded-xl mb-8 shadow-lg"
+            className="w-full max-w-sm mx-auto rounded-xl mb-8 shadow-lg"
           />
 
           <h2 className="text-3xl font-bold text-white mb-4">

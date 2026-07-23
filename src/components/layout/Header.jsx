@@ -76,7 +76,7 @@ export default function Header({ user }) {
       <div className="flex items-center gap-2">
         {section && (
           <>
-            <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">
+            <span className="hidden sm:inline text-xs text-gray-400 font-medium uppercase tracking-wide">
               {section}
             </span>
             <ChevronRight size={14} className="text-gray-300" />

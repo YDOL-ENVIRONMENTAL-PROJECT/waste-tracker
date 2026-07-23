@@ -106,7 +106,7 @@ export default function GarbageBinList() {
           placeholder="Rechercher par code..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="input w-64 border rounded-lg px-4 py-2"
+          className="input w-full sm:w-64 border rounded-lg px-4 py-2"
         />
 
         {/* FILTER */}

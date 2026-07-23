@@ -119,10 +119,10 @@ export default function ClientList() {
         {/* SEARCH */}
         <input
           type="text"
-          placeholder="Rechercher un client"
+          placeholder="Rechercher par email ou nom..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="border rounded-lg px-4 py-2 w-64"
+          className="border rounded-lg px-4 py-2 w-full sm:w-64"
         />
 
         <div className="flex items-center gap-2">

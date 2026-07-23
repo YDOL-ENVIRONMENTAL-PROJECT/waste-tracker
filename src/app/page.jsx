@@ -9,12 +9,12 @@ export default function Home() {
     <main className="min-h-screen bg-white">
 
       {/* NAVBAR */}
-      <header className="fixed top-0 left-0 w-full flex justify-between items-center px-10 py-6 shadow-sm bg-white z-50">        
-        <h1 className="text-2xl font-bold text-green-600">  
+      <header className="fixed top-0 left-0 w-full flex justify-between items-center px-6 md:px-10 py-4 md:py-6 shadow-sm bg-white z-50">        
+        <h1 className="text-xl md:text-2xl font-bold text-green-600">  
           Waste Tracker
         </h1>
 
-        <nav className="flex gap-8 text-gray-600 font-medium">
+        <nav className="hidden md:flex gap-8 text-gray-600 font-medium">
           <a href="#features">Fonctionnalités</a>
           <a href="#how">Comment ça marche</a>
           <a href="#contact">Contact</a>
@@ -33,24 +33,24 @@ export default function Home() {
 
 
       {/* HERO */}
-      <section className="flex flex-col items-center text-center py-32 px-6 bg-green-50">
+      <section className="flex flex-col items-center text-center py-20 md:py-32 px-6 bg-green-50 mt-16 md:mt-0">
 
-        <h2 className="text-5xl font-bold text-gray-900 max-w-3xl">
+        <h2 className="text-3xl md:text-5xl font-bold text-gray-900 max-w-3xl">
           Une gestion intelligente de la collecte des déchets
         </h2>
 
-        <p className="mt-6 text-lg text-gray-600 max-w-xl">
+        <p className="mt-6 text-base md:text-lg text-gray-600 max-w-xl">
           Waste Tracker connecte le service de gestion des ordures et les
           citoyens afin d'améliorer l'efficacité de la collecte des déchets,
           d'optimiser les tournées et de garder les villes propres.
         </p>
 
-        <div className="flex gap-6 mt-10">
-          <button className="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold">
+        <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 mt-10 w-full sm:w-auto">
+          <button className="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold w-full sm:w-auto">
             Commencer
           </button>
 
-          <button className="border border-green-600 text-green-600 px-8 py-3 rounded-lg">
+          <button className="border border-green-600 text-green-600 px-8 py-3 rounded-lg w-full sm:w-auto">
             En savoir plus
           </button>
         </div>
@@ -59,9 +59,9 @@ export default function Home() {
 
 
       {/* FEATURES */}
-      <section id="features" className="py-24 px-10">
+      <section id="features" className="py-16 md:py-24 px-6 md:px-10">
 
-        <h3 className="text-3xl font-bold text-center mb-16">
+        <h3 className="text-2xl md:text-3xl font-bold text-center mb-12 md:mb-16">
           Fonctionnalités principales
         </h3>
 
@@ -106,9 +106,9 @@ export default function Home() {
 
 
       {/* HOW IT WORKS */}
-      <section id="how" className="py-24 px-10 bg-gray-50">
+      <section id="how" className="py-16 md:py-24 px-6 md:px-10 bg-gray-50">
 
-        <h3 className="text-3xl font-bold text-center mb-16">
+        <h3 className="text-2xl md:text-3xl font-bold text-center mb-12 md:mb-16">
           Comment ça fonctionne
         </h3>
 
@@ -144,9 +144,9 @@ export default function Home() {
 
 
       {/* CTA */}
-      <section className="py-24 text-center bg-green-600 text-white">
+      <section className="py-16 md:py-24 px-6 text-center bg-green-600 text-white">
 
-        <h3 className="text-3xl font-bold mb-6">
+        <h3 className="text-2xl md:text-3xl font-bold mb-6">
           Améliorons ensemble la gestion des déchets
         </h3>
 

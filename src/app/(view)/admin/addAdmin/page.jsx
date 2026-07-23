@@ -79,9 +79,9 @@ export default function AddAdmin() {
 
   return (
 
-    <div className="bg-green-50 flex justify-center p-10">
+    <div className="bg-green-50 flex justify-center p-4 sm:p-6 md:p-10">
 
-      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-sm border border-gray-100 p-10">
+      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-10">
 
         {/* TITLE */}
         <h1 className="text-2xl font-bold text-gray-800 mb-8">

@@ -61,8 +61,8 @@ export default function NewMission() {
 
   return (
     <>
-      <div className={`p-8 bg-gray-50 min-h-screen transition-all duration-300 ${isDriverModalOpen ? 'blur-sm' : ''}`}>
-        <div className="max-w-2xl mx-auto bg-white p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6">
+      <div className={`p-4 sm:p-8 bg-gray-50 min-h-screen transition-all duration-300 ${isDriverModalOpen ? 'blur-sm' : ''}`}>
+        <div className="max-w-2xl mx-auto bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-gray-100 space-y-6">
 
           <h1 className="text-2xl font-bold text-gray-800">
             Nouvelle Mission

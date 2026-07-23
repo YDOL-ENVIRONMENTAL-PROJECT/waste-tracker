@@ -107,8 +107,8 @@ export default function AdminProfile() {
   }
 
   return (
-    <div className="w-full flex justify-center bg-green-50 p-10">
-      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-10">
+    <div className="w-full flex justify-center bg-green-50 p-4 sm:p-6 md:p-10">
+      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-lg p-6 sm:p-10">
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-10">
           Mon Profil Admin
         </h1>

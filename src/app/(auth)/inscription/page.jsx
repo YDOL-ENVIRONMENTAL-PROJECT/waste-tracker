@@ -134,7 +134,7 @@ export default function Register() {
         <img
           src="/assets/create-account-image.png"
           alt="Waste collection"
-          className="w-105 mb-10 rounded-xl shadow-2xl"
+          className="w-full max-w-sm mb-10 rounded-xl shadow-2xl"
         />
 
         <h2 className="text-4xl font-bold mb-6 text-center">
@@ -149,7 +149,7 @@ export default function Register() {
       </div>
 
       {/* SECTION FORMULAIRE */}
-      <div className="flex items-center justify-center bg-green-50 p-8">
+      <div className="flex items-center justify-center bg-green-50 p-4 sm:p-8">
         <div className="w-full max-w-md">
           <Link
             href="/"
@@ -158,8 +158,8 @@ export default function Register() {
             ← Retour à l'accueil
           </Link>
 
-          <div className="bg-white rounded-2xl shadow-xl p-10">
-            <h1 className="text-3xl font-bold text-center text-green-600 mb-8">
+          <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-10">
+            <h1 className="text-2xl sm:text-3xl font-bold text-center text-green-600 mb-8">
               Créer un compte
             </h1>
 
@@ -222,7 +222,7 @@ export default function Register() {
 
               {formData.accountType === "INDIVIDUAL" ? (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <input
                       type="text"
                       name="firstName"
@@ -327,7 +327,7 @@ export default function Register() {
                 disabled={isLoading}
               />
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <input
                   type="text"
                   name="town"

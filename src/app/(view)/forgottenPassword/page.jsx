@@ -32,9 +32,9 @@ export default function ForgottenPassword() {
 
   return (
 
-    <div className="w-full flex justify-center p-10 bg-green-50">
+    <div className="w-full flex justify-center p-4 sm:p-6 md:p-10 bg-green-50">
 
-      <div className="w-full max-w-xl bg-white rounded-2xl shadow-lg p-10">
+      <div className="w-full max-w-xl bg-white rounded-2xl shadow-lg p-6 sm:p-10">
 
         <div className="flex flex-col items-center mb-8">
 
