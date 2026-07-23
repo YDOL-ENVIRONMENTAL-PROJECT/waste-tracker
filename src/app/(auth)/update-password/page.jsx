@@ -5,7 +5,7 @@ import Link from "next/link";
 import { auth } from "@/services/auth";
 
 export default function UpdatePassword() {
-  const [oldPassword, setOldPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -13,8 +13,8 @@ export default function UpdatePassword() {
   const [userRole, setUserRole] = useState(null);
   
   // Validations logiques
-  const isIdentical = oldPassword !== "" && newPassword !== "" && oldPassword === newPassword;
-  const isFormValid = oldPassword.trim() !== "" && newPassword.trim() !== "" && !isIdentical;
+  const isIdentical = currentPassword !== "" && newPassword !== "" && currentPassword === newPassword;
+  const isFormValid = currentPassword.trim() !== "" && newPassword.trim() !== "" && !isIdentical;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,11 +25,11 @@ export default function UpdatePassword() {
     setSuccess(false);
 
     // Remplacez par votre méthode de service appropriée (ex: updatePassword)
-    const result = await auth.updatePassword({ oldPassword, newPassword });
+    const result = await auth.updatePassword({ currentPassword, newPassword });
 
     if (result.success) {
       setSuccess(true);
-      setOldPassword("");
+      setCurrentPassword("");
       setNewPassword("");
     } else {
       setError(result.error || "Une erreur s'est produite lors de la modification");
@@ -87,9 +87,9 @@ export default function UpdatePassword() {
                 <input
                   type="password"
                   placeholder="Ancien mot de passe"
-                  value={oldPassword}
+                  value={currentPassword}
                   onChange={(e) => {
-                    setOldPassword(e.target.value);
+                    setCurrentPassword(e.target.value);
                     setError("");
                   }}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 disabled:bg-gray-100"

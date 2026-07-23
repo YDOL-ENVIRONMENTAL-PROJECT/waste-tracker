@@ -65,6 +65,15 @@ export const auth = {
     }
   },
 
+  updatePassword: async (data) => {
+    try {
+      const response = await apiClient.put("/auth/update-password", data);
+      return { success: true, data: response.data };
+    } catch (error) {
+      return { success: false, error: getErrorMessage(error, "Erreur de mise à jour du mot de passe") };
+    }
+  },
+  
   logout: () => {
     if (typeof window !== "undefined") {
       localStorage.removeItem("token");
