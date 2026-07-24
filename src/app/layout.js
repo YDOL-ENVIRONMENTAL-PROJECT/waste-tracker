@@ -1,5 +1,5 @@
 import "./global.css";
-import { ToastProvider } from "@/components/ui/Toast";
+import { AppToaster } from "@/components/ui/Toast";
 
 export const metadata = {
   title: "Waste Tracker — Gestion intelligente des déchets",
@@ -11,7 +11,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="fr">
       <body className="antialiased">
-        <ToastProvider>{children}</ToastProvider>
+        {children}
+        <AppToaster />
       </body>
     </html>
   );

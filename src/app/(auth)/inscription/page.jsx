@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { User, Calendar } from "lucide-react";
 import { auth } from "@/services/auth";
+import { notify } from "@/lib/notify";
 
 function readImageAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -35,8 +36,6 @@ export default function Register() {
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -44,8 +43,6 @@ export default function Register() {
       ...formData,
       [name]: value,
     });
-    setError("");
-    setPasswordError("");
   };
 
   const handlePhotoChange = async (e) => {
@@ -58,34 +55,33 @@ export default function Register() {
         ...formData,
         profilePicture: dataUrl,
       });
-      setError("");
     } catch {
-      setError("Impossible de charger la photo de profil");
+      notify.error("Impossible de charger la photo de profil");
     }
   };
 
   const validateForm = () => {
     if (formData.accountType === "INDIVIDUAL") {
       if (!formData.firstName.trim() || !formData.lastName.trim()) {
-        setError("Le prénom et le nom sont requis pour un compte particulier");
+        notify.error("Le prénom et le nom sont requis");
         return false;
       }
       if (!formData.dateOfBirth.trim()) {
-        setError("La date de naissance est requise pour un compte particulier");
+        notify.error("La date de naissance est requise");
         return false;
       }
     } else if (!formData.name.trim()) {
-      setError("Le nom de l'entreprise est requis pour un compte entreprise");
+      notify.error("Le nom de l'entreprise est requis");
       return false;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      setPasswordError("Les mots de passe ne correspondent pas");
+      notify.error("Les mots de passe ne correspondent pas");
       return false;
     }
 
     if (formData.password.length < 6) {
-      setPasswordError("Le mot de passe doit contenir au moins 6 caractères");
+      notify.warning("Le mot de passe doit contenir au moins 6 caractères");
       return false;
     }
 
@@ -100,7 +96,6 @@ export default function Register() {
     }
 
     setIsLoading(true);
-    setError("");
 
     const registerData = {
       accountType: formData.accountType,
@@ -119,9 +114,13 @@ export default function Register() {
     const result = await auth.register(registerData);
 
     if (result.success) {
+      notify.success("Inscription réussie");
       router.push("/connexion");
     } else {
-      setError(result.error || "Une erreur s'est produite lors de l'inscription");
+      notify.error(
+        result.error || "Impossible de créer le compte",
+        result.technical
+      );
     }
 
     setIsLoading(false);
@@ -162,12 +161,6 @@ export default function Register() {
             <h1 className="text-2xl sm:text-3xl font-bold text-center text-green-600 mb-8">
               Créer un compte
             </h1>
-
-            {error && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
-            )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="flex flex-col items-center gap-3">
@@ -362,21 +355,16 @@ export default function Register() {
                 disabled={isLoading}
               />
 
-              <div>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  placeholder="Confirmer le mot de passe"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="input-style"
-                  required
-                  disabled={isLoading}
-                />
-                {passwordError && (
-                  <p className="text-red-600 text-sm mt-1">{passwordError}</p>
-                )}
-              </div>
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirmer le mot de passe"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="input-style"
+                required
+                disabled={isLoading}
+              />
 
               <button
                 type="submit"

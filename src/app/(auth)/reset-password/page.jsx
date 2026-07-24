@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/services/auth";
+import { notify } from "@/lib/notify";
 
 function ResetPasswordContent() {
   const router = useRouter();
@@ -16,24 +17,19 @@ function ResetPasswordContent() {
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-  const [success, setSuccess] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-    setError("");
-    setPasswordError("");
   };
 
   const validateForm = () => {
     if (formData.password !== formData.confirmPassword) {
-      setPasswordError("Les mots de passe ne correspondent pas");
+      notify.error("Les mots de passe ne correspondent pas");
       return false;
     }
     if (formData.password.length < 6) {
-      setPasswordError("Le mot de passe doit contenir au moins 6 caractères");
+      notify.warning("Le mot de passe doit contenir au moins 6 caractères");
       return false;
     }
     return true;
@@ -43,14 +39,13 @@ function ResetPasswordContent() {
     e.preventDefault();
 
     if (!token) {
-      setError("Token invalide. Demandez un nouveau lien.");
+      notify.error("Lien invalide. Demandez un nouveau lien.");
       return;
     }
 
     if (!validateForm()) return;
 
     setIsLoading(true);
-    setError("");
 
     const result = await auth.resetPassword(
       token,
@@ -59,10 +54,13 @@ function ResetPasswordContent() {
     );
 
     if (result.success) {
-      setSuccess(true);
+      notify.success("Mot de passe réinitialisé");
       setTimeout(() => router.push("/connexion"), 2000);
     } else {
-      setError(result.error || "Erreur lors de la réinitialisation");
+      notify.error(
+        result.error || "Impossible de réinitialiser le mot de passe",
+        result.technical
+      );
     }
 
     setIsLoading(false);
@@ -82,30 +80,25 @@ function ResetPasswordContent() {
               Réinitialiser
             </h1>
 
-            {error && <p className="text-red-600">{error}</p>}
-            {success && <p className="text-green-600">Succès ✔</p>}
-
-            {!success && (
-              <form onSubmit={handleSubmit}>
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Nouveau mot de passe"
-                  value={formData.password}
-                  onChange={handleChange}
-                />
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  placeholder="Confirmer"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                />
-                <button disabled={!token || isLoading}>
-                  Reset
-                </button>
-              </form>
-            )}
+            <form onSubmit={handleSubmit}>
+              <input
+                type="password"
+                name="password"
+                placeholder="Nouveau mot de passe"
+                value={formData.password}
+                onChange={handleChange}
+              />
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirmer"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+              />
+              <button disabled={!token || isLoading}>
+                Reset
+              </button>
+            </form>
           </div>
         </div>
       </div>

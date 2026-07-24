@@ -8,7 +8,7 @@ import { Search, ChevronRight } from "lucide-react";
 import { auth } from "@/services/auth";
 import { getDisplayName, getInitials } from "@/services/user";
 
-export default function Header({ user }) {
+export default function Header({ user, onLogout }) {
   const router = useRouter();
   const pathname = usePathname();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -148,9 +148,13 @@ export default function Header({ user }) {
                 Mon profil
               </Link>
               <button
-                onClick={() => {
+                onClick={async () => {
                   setShowDropdown(false);
-                  auth.logout();
+                  if (onLogout) {
+                    await onLogout();
+                  } else {
+                    await auth.logout();
+                  }
                   router.push("/connexion");
                 }}
                 className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 transition w-full text-left"

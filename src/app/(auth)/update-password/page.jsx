@@ -3,13 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { auth } from "@/services/auth";
+import { notify } from "@/lib/notify";
 
 export default function UpdatePassword() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
   const [userRole, setUserRole] = useState(null);
   
   // Validations logiques
@@ -21,18 +20,18 @@ export default function UpdatePassword() {
     if (!isFormValid) return;
 
     setIsLoading(true);
-    setError("");
-    setSuccess(false);
 
-    // Remplacez par votre méthode de service appropriée (ex: updatePassword)
     const result = await auth.updatePassword({ currentPassword, newPassword });
 
     if (result.success) {
-      setSuccess(true);
+      notify.success("Mot de passe modifié avec succès");
       setCurrentPassword("");
       setNewPassword("");
     } else {
-      setError(result.error || "Une erreur s'est produite lors de la modification");
+      notify.error(
+        result.error || "Impossible de modifier le mot de passe",
+        result.technical
+      );
     }
 
     setIsLoading(false);
@@ -68,30 +67,13 @@ export default function UpdatePassword() {
               Assurez la sécurité de votre compte en choisissant un mot de passe robuste.
             </p>
 
-            {error && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
-            )}
-
-            {success && (
-              <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-green-700 text-sm">
-                  Votre mot de passe a été modifié avec succès !
-                </p>
-              </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <input
                   type="password"
                   placeholder="Ancien mot de passe"
                   value={currentPassword}
-                  onChange={(e) => {
-                    setCurrentPassword(e.target.value);
-                    setError("");
-                  }}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
                   className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:border-green-500 disabled:bg-gray-100"
                   required
                   disabled={isLoading}
@@ -103,10 +85,7 @@ export default function UpdatePassword() {
                   type="password"
                   placeholder="Nouveau mot de passe"
                   value={newPassword}
-                  onChange={(e) => {
-                    setNewPassword(e.target.value);
-                    setError("");
-                  }}
+                  onChange={(e) => setNewPassword(e.target.value)}
                   className={`w-full p-3 border rounded-lg focus:outline-none disabled:bg-gray-100 transition-colors ${
                     isIdentical 
                       ? "border-red-500 focus:border-red-500 bg-red-50" 

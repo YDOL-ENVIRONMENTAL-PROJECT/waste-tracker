@@ -3,26 +3,26 @@
 import { useState } from "react";
 import Link from "next/link";
 import { auth } from "@/services/auth";
+import { notify } from "@/lib/notify";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
-    setSuccess(false);
 
     const result = await auth.forgotPassword(email);
 
     if (result.success) {
-      setSuccess(true);
+      notify.success("Un email de réinitialisation a été envoyé. Vérifiez votre boîte de réception.");
       setEmail("");
     } else {
-      setError(result.error || "Une erreur s'est produite");
+      notify.error(
+        result.error || "Impossible d'envoyer le lien",
+        result.technical
+      );
     }
 
     setIsLoading(false);
@@ -49,29 +49,12 @@ export default function ForgotPassword() {
               Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
             </p>
 
-            {error && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
-            )}
-
-            {success && (
-              <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-green-700 text-sm">
-                  Un email de réinitialisation a été envoyé. Veuillez vérifier votre boîte de réception.
-                </p>
-              </div>
-            )}
-
             <form onSubmit={handleSubmit} className="space-y-4">
               <input
                 type="email"
                 placeholder="Votre email"
                 value={email}
-                onChange={(e) => {
-                  setEmail(e.target.value);
-                  setError("");
-                }}
+                onChange={(e) => setEmail(e.target.value)}
                 className="input-style"
                 required
                 disabled={isLoading}

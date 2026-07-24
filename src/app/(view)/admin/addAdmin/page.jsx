@@ -3,15 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import SuccessModal from "@/components/layout/Modals/SuccessModal";
-import ErrorModal from "@/components/layout/Modals/ErrorModal";
 import ConfirmationModal from "@/components/layout/Modals/ConfirmationModal";
 import { admins } from "@/services/admin";
+import { notify } from "@/lib/notify";
 
 export default function AddAdmin() {
 
   const router = useRouter();
   const [showSuccess, setShowSuccess] = useState(false);
-  const [showError, setShowError] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [generatedPassword, setGeneratedPassword] = useState("");
@@ -66,12 +65,13 @@ export default function AddAdmin() {
         setGeneratedPassword(tempPassword);
         setShowSuccess(true);
       } else {
-        console.error("Error creating admin:", result.error);
-        setShowError(true);
+        notify.error(
+          result.error || "Impossible de créer l'administrateur",
+          result.technical
+        );
       }  
     } catch (error) {
-      console.error("Error creating admin:", error);
-      setShowError(true);
+      notify.error("Impossible de créer l'administrateur", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -272,13 +272,6 @@ export default function AddAdmin() {
             setShowSuccess(false);
             router.push("/admin/adminList");
           }}
-        />
-      )}
-
-      {showError && (
-        <ErrorModal
-          message="Une erreur est survenue lors de la création de l'administrateur."
-          onClose={() => setShowError(false)}
         />
       )}
 

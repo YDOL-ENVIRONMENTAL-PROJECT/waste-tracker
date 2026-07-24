@@ -2,16 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import SuccessModal from "@/components/layout/Modals/SuccessModal";
-import ErrorModal from "@/components/layout/Modals/ErrorModal";
 import ConfirmationModal from "@/components/layout/Modals/ConfirmationModal";
+import { notify } from "@/lib/notify";
 
 export default function AddDriver() {
 
   const router = useRouter();
 
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showError, setShowError] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -65,11 +62,11 @@ export default function AddDriver() {
       //   body: data
       // });
 
-      setShowSuccess(true);
+      notify.success("Chauffeur ajouté avec succès");
+      router.push("/admin/driverList");
 
     } catch (error) {
-      console.error(error);
-      setShowError(true);
+      notify.error("Impossible d'ajouter le chauffeur", error);
     }
   };
 
@@ -226,23 +223,6 @@ export default function AddDriver() {
           message="Créer ce chauffeur ?"
           onConfirm={handleConfirm}
           onCancel={() => setShowConfirmation(false)}
-        />
-      )}
-
-      {showSuccess && (
-        <SuccessModal
-          message="Chauffeur ajouté avec succès !"
-          onClose={() => {
-            setShowSuccess(false);
-            router.push("/admin/driverList");
-          }}
-        />
-      )}
-
-      {showError && (
-        <ErrorModal
-          message="Erreur lors de l'ajout du chauffeur."
-          onClose={() => setShowError(false)}
         />
       )}
 

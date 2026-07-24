@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { garbagebins } from "@/services/garbagebin"; // Adaptez le chemin d'accès selon votre arborescence
+import { notify } from "@/lib/notify";
 
 export default function GarbageBinList() {
   const { user } = useAuth();
@@ -17,7 +18,6 @@ export default function GarbageBinList() {
   // États pour la gestion des données réelles
   const [binList, setBinList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [apiError, setApiError] = useState("");
 
   const [search, setSearch] = useState("");
   const [filterCity, setFilterCity] = useState("");
@@ -26,17 +26,18 @@ export default function GarbageBinList() {
   useEffect(() => {
     const fetchBins = async () => {
       setIsLoading(true);
-      setApiError("");
       
       const result = await garbagebins.getAll();
       
-      // 🟢 AFFICHAGE DE LA RÉPONSE BACKEND DANS LA CONSOLE
       console.log("[Backend Response] Liste des bacs à ordures :", result);
       
       if (result.success) {
         setBinList(result.data || []);
       } else {
-        setApiError(result.error || "Impossible de charger les bacs à ordures.");
+        notify.error(
+          result.error || "Impossible de charger les bacs à ordures",
+          result.technical
+        );
       }
       setIsLoading(false);
     };
@@ -49,10 +50,13 @@ export default function GarbageBinList() {
     if (confirm(`Voulez-vous vraiment archiver le bac à ordures avec le code ${code} ?`)) {
       const result = await garbagebins.archive(id);
       if (result.success) {
-        // Suppression visuelle instantanée de la liste locale
         setBinList((prev) => prev.filter((bin) => bin.id !== id));
+        notify.success("Bac archivé");
       } else {
-        alert(result.error || "Une erreur est survenue lors de l'archivage.");
+        notify.error(
+          result.error || "Impossible d'archiver ce bac",
+          result.technical
+        );
       }
     }
   };
@@ -89,13 +93,6 @@ export default function GarbageBinList() {
 
   return (
     <div className="p-8 space-y-6">
-
-      {/* RENDER DES ERREURS D'API */}
-      {apiError && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
-          {apiError}
-        </div>
-      )}
 
       {/* SEARCH + FILTER */}
       <div className="flex flex-wrap gap-4 items-center">

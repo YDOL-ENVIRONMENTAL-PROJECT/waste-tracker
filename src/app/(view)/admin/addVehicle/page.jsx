@@ -2,16 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import SuccessModal from "@/components/layout/Modals/SuccessModal";
-import ErrorModal from "@/components/layout/Modals/ErrorModal";
 import ConfirmationModal from "@/components/layout/Modals/ConfirmationModal";
+import { notify } from "@/lib/notify";
 
 export default function AddVehicle() {
 
   const router = useRouter();
 
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showError, setShowError] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -73,11 +70,11 @@ export default function AddVehicle() {
       //   body: data
       // });
 
-      setShowSuccess(true);
+      notify.success("Véhicule ajouté avec succès");
+      router.push("/admin/vehicleList");
 
     } catch (error) {
-      console.error(error);
-      setShowError(true);
+      notify.error("Impossible d'ajouter le véhicule", error);
     }
   };
 
@@ -218,23 +215,6 @@ export default function AddVehicle() {
           message="Créer ce véhicule ?"
           onConfirm={handleConfirm}
           onCancel={() => setShowConfirmation(false)}
-        />
-      )}
-
-      {showSuccess && (
-        <SuccessModal
-          message="Véhicule ajouté avec succès !"
-          onClose={() => {
-            setShowSuccess(false);
-            router.push("/admin/vehicleList");
-          }}
-        />
-      )}
-
-      {showError && (
-        <ErrorModal
-          message="Erreur lors de l'ajout du véhicule."
-          onClose={() => setShowError(false)}
         />
       )}
 

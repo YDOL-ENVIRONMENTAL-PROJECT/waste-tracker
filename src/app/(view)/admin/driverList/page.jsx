@@ -9,6 +9,7 @@ import { Plus, ArrowUp, ArrowDown, Filter, Loader2 } from "lucide-react";
 import { PersonOff } from "@mui/icons-material";
 import { useAuth } from "@/hooks/useAuth";
 import { drivers } from "@/services/driver"; // Adaptez le chemin d'importation exact
+import { notify } from "@/lib/notify";
 
 export default function DriverList() {
   const { user } = useAuth();
@@ -17,7 +18,6 @@ export default function DriverList() {
   // États pour les données issues de l'API
   const [driverList, setDriverList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [apiError, setApiError] = useState("");
 
   const [search, setSearch] = useState("");
   const [filterBy, setFilterBy] = useState("ville"); // "ville" ou "site"
@@ -29,17 +29,18 @@ export default function DriverList() {
   useEffect(() => {
     const fetchDrivers = async () => {
       setIsLoading(true);
-      setApiError("");
 
       const result = await drivers.getAll();
 
-      // 🟢 AFFICHAGE DE LA RÉPONSE BACKEND DANS LA CONSOLE
       console.log("[Backend Response] Liste des conducteurs :", result);
 
       if (result.success) {
         setDriverList(result.data || []);
       } else {
-        setApiError(result.error || "Impossible de charger les conducteurs.");
+        notify.error(
+          result.error || "Impossible de charger les conducteurs",
+          result.technical
+        );
       }
       setIsLoading(false);
     };
@@ -52,10 +53,13 @@ export default function DriverList() {
     if (confirm(`Voulez-vous vraiment archiver le conducteur ${firstName} ${lastName} ?`)) {
       const result = await drivers.archive(id);
       if (result.success) {
-        // Filtrer localement pour retirer le conducteur archivé de l'affichage
         setDriverList((prev) => prev.filter((d) => d.id !== id));
+        notify.success("Conducteur archivé");
       } else {
-        alert(result.error || "Une erreur est survenue lors de l'archivage.");
+        notify.error(
+          result.error || "Impossible d'archiver ce conducteur",
+          result.technical
+        );
       }
     }
   };
@@ -105,13 +109,6 @@ export default function DriverList() {
 
   return (
     <div className="p-8">
-
-      {/* RENDER DES ERREURS D'API */}
-      {apiError && (
-        <div className="p-4 mb-6 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
-          {apiError}
-        </div>
-      )}
 
       {/* SEARCH + FILTERS */}
       <div className="flex gap-4 mb-6 flex-wrap items-center">

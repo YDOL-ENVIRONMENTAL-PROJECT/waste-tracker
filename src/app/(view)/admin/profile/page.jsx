@@ -12,13 +12,13 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchCurrentUserProfile, updateProfile } from "@/services/user";
 import { LoadingIcon } from "@/components/ui/Loading";
+import { notify } from "@/lib/notify";
 
 export default function AdminProfile() {
   const { user: authUser, isLoading: authLoading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false); // État pour le chargement de la sauvegarde
-  const [error, setError] = useState("");
   const [admin, setAdmin] = useState(null);
   
   const fileInputRef = useRef(null);
@@ -28,8 +28,16 @@ export default function AdminProfile() {
     try {
       const response = await fetchCurrentUserProfile();
       console.log("Profil utilisateur :", response);
-      const profile = response?.data || response;
-      
+
+      if (!response.success) {
+        notify.error(
+          response.error || "Impossible de charger le profil",
+          response.technical
+        );
+        return;
+      }
+
+      const profile = response.data;
       setAdmin({
         id: profile?.id,
         firstName: profile?.firstName || profile?.name || "",
@@ -41,7 +49,7 @@ export default function AdminProfile() {
         photo: profile?.profilePicture || "",
       });
     } catch (err) {
-      setError(err.message || "Impossible de charger le profil");
+      notify.error("Impossible de charger le profil", err);
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +97,6 @@ export default function AdminProfile() {
     if (!admin?.id) return;
 
     setIsSaving(true); // Active l'écran de chargement de sauvegarde
-    setError("");
 
     const payload = {
       firstName: admin.firstName,
@@ -113,11 +120,15 @@ export default function AdminProfile() {
         // 2. GET des nouvelles infos fraîches du backend avant de couper le loading
         await loadProfile();
         setIsEditing(false);
+        notify.success("Profil mis à jour");
       } else {
-        setError(result.error || "Impossible de mettre à jour le profil");
+        notify.error(
+          result.error || "Impossible de mettre à jour le profil",
+          result.technical
+        );
       }
     } catch (err) {
-      setError(err.message || "Impossible de mettre à jour le profil");
+      notify.error("Impossible de mettre à jour le profil", err);
     } finally {
       setIsSaving(false); // Désactive le chargement dans tous les cas
     }
@@ -138,7 +149,7 @@ export default function AdminProfile() {
   if (!admin) {
     return (
       <div className="w-full flex justify-center bg-green-50 p-10">
-        <p className="text-red-600">{error || "Profil introuvable"}</p>
+        <p className="text-gray-600">Profil introuvable</p>
       </div>
     );
   }
@@ -149,12 +160,6 @@ export default function AdminProfile() {
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-10">
           Mon Profil Admin
         </h1>
-
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            {error}
-          </div>
-        )}
 
         <div className="flex flex-col items-center mb-10">
           <div className="relative">

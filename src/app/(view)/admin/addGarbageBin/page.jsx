@@ -2,16 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import SuccessModal from "@/components/layout/Modals/SuccessModal";
-import ErrorModal from "@/components/layout/Modals/ErrorModal";
 import ConfirmationModal from "@/components/layout/Modals/ConfirmationModal";
+import { notify } from "@/lib/notify";
 
 export default function AddGarbageBin() {
 
   const router = useRouter();
 
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showError, setShowError] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -102,11 +99,11 @@ export default function AddGarbageBin() {
       //   body: data
       // });
 
-      setShowSuccess(true);
+      notify.success("Bac ajouté avec succès");
+      router.push("/admin/garbageBinList");
 
     } catch (error) {
-      console.error(error);
-      setShowError(true);
+      notify.error("Impossible d'ajouter le bac", error);
     }
   };
 
@@ -245,23 +242,6 @@ export default function AddGarbageBin() {
           message="Créer ce bac ?"
           onConfirm={handleConfirm}
           onCancel={() => setShowConfirmation(false)}
-        />
-      )}
-
-      {showSuccess && (
-        <SuccessModal
-          message="Bac ajouté avec succès !"
-          onClose={() => {
-            setShowSuccess(false);
-            router.push("/admin/garbageBinList");
-          }}
-        />
-      )}
-
-      {showError && (
-        <ErrorModal
-          message="Erreur lors de l'ajout du bac."
-          onClose={() => setShowError(false)}
         />
       )}
 

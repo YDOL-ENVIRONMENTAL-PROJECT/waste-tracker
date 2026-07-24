@@ -6,6 +6,7 @@ import { Plus, Loader2 } from "lucide-react";
 import { PersonOff } from "@mui/icons-material";
 import { useAuth } from "@/hooks/useAuth";
 import { admins } from "@/services/admin"; 
+import { notify } from "@/lib/notify";
 
 export default function AdminList() {
   const { user } = useAuth();
@@ -16,7 +17,6 @@ export default function AdminList() {
   const [adminList, setAdminList] = useState([]);
   const [archivedAdmins, setArchivedAdmins] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [apiError, setApiError] = useState("");
 
   const [search, setSearch] = useState("");
   const [cityFilter, setCityFilter] = useState("");
@@ -29,25 +29,38 @@ export default function AdminList() {
   const [isArchiving, setIsArchiving] = useState(false);
 
   // Récupération des administrateurs depuis le backend
-  const fetchAdmins = async () => {
-    setIsLoading(true);
-    setApiError("");
+  const fetchAdmins = async ({ silent = false } = {}) => {
+    if (!silent) {
+      setIsLoading(true);
+    }
     const result = await admins.getAll();
 
     if (result.success) {
-      const active = (result.data || []).filter(a => a.status !== "ARCHIVED");
-      const archived = (result.data || []).filter(a => a.status === "ARCHIVED");
-      
+      const active = (result.data || []).filter(
+        (a) => a.status !== "SUSPENDED" && a.status !== "ARCHIVED"
+      );
+      const archived = (result.data || []).filter(
+        (a) => a.status === "SUSPENDED" || a.status === "ARCHIVED"
+      );
+
       setAdminList(active);
       setArchivedAdmins(archived);
-    } else {
-      setApiError(result.error || "Impossible de charger les administrateurs.");
+    } else if (!silent) {
+      notify.error(
+        result.error || "Impossible de charger les administrateurs",
+        result.technical
+      );
     }
-    setIsLoading(false);
+    if (!silent) {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
     fetchAdmins();
+    // Refresh presence LEDs without full-page loading
+    const intervalId = setInterval(() => fetchAdmins({ silent: true }), 30_000);
+    return () => clearInterval(intervalId);
   }, []);
 
   const handleSelectAdmin = (id) => {
@@ -67,8 +80,9 @@ export default function AdminList() {
       setSelectedAdminIds([]);
       setIsDeleteMode(false);
       await fetchAdmins();
+      notify.success("Administrateurs archivés");
     } catch (err) {
-      alert("Une erreur est survenue lors de la suppression de certains administrateurs.");
+      notify.error("Impossible d'archiver certains administrateurs", err);
     } finally {
       setIsArchiving(false);
     }
@@ -102,12 +116,6 @@ export default function AdminList() {
 
   return (
     <div className="p-8">
-      {apiError && (
-        <div className="p-4 mb-6 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
-          {apiError}
-        </div>
-      )}
-
       {/* SEARCH + FILTER */}
       <div className="flex gap-4 mb-6 items-center">
         <input

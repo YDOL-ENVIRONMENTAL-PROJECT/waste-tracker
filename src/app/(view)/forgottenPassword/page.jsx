@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { LockReset } from "@mui/icons-material";
+import { notify } from "@/lib/notify";
 
 export default function ForgottenPassword() {
 
@@ -23,7 +24,7 @@ export default function ForgottenPassword() {
     e.preventDefault();
 
     if (formData.newPassword !== formData.confirmPassword) {
-      alert("Les mots de passe ne correspondent pas");
+      notify.error("Les mots de passe ne correspondent pas");
       return;
     }
 

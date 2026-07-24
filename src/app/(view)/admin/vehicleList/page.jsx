@@ -9,6 +9,7 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { vehicles } from "@/services/vehicle";
+import { notify } from "@/lib/notify";
 
 export default function VehicleList() {
   const { user } = useAuth();
@@ -17,7 +18,6 @@ export default function VehicleList() {
   // États pour les données de l'API
   const [vehicleList, setVehicleList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [apiError, setApiError] = useState("");
 
   // États pour la recherche et le filtrage
   const [search, setSearch] = useState("");
@@ -27,17 +27,18 @@ export default function VehicleList() {
   useEffect(() => {
     const fetchVehicles = async () => {
       setIsLoading(true);
-      setApiError("");
       
       const result = await vehicles.getAll();
       
-      // 🟢 AFFICHAGE DE LA RÉPONSE BACKEND DANS LA CONSOLE
       console.log("[Backend Response] Liste des véhicules :", result);
       
       if (result.success) {
         setVehicleList(result.data || []);
       } else {
-        setApiError(result.error || "Impossible de charger les véhicules.");
+        notify.error(
+          result.error || "Impossible de charger les véhicules",
+          result.technical
+        );
       }
       setIsLoading(false);
     };
@@ -51,8 +52,12 @@ export default function VehicleList() {
       const result = await vehicles.archive(id);
       if (result.success) {
         setVehicleList((prev) => prev.filter((v) => v.id !== id));
+        notify.success("Véhicule archivé");
       } else {
-        alert(result.error || "Une erreur est survenue lors de l'archivage.");
+        notify.error(
+          result.error || "Impossible d'archiver ce véhicule",
+          result.technical
+        );
       }
     }
   };
@@ -80,13 +85,6 @@ export default function VehicleList() {
   return (
     <div className="p-8 space-y-6">
       
-      {/* AFFICHAGE DES ERREURS API */}
-      {apiError && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
-          {apiError}
-        </div>
-      )}
-
       {/* SEARCH + FILTER */}
       <div className="flex flex-wrap gap-4 items-center">
         {/* SEARCH */}

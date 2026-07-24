@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/services/auth";
+import { notify } from "@/lib/notify";
 
 export default function Login() {
   const router = useRouter();
@@ -12,7 +13,6 @@ export default function Login() {
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
 
   const handleChange = (e) => {
@@ -21,27 +21,21 @@ export default function Login() {
       ...formData,
       [name]: value,
     });
-    setError(""); // Clear error when user types
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    setError("");
-
-    console.log("Submitting login form with data:", formData);
 
     const result = await auth.login(formData.email, formData.password);
 
-    console.log("Login response:", result);
-
     if (result.success) {
-      // Store remember me preference
+      notify.success("Connexion réussie");
+
       if (rememberMe && typeof window !== "undefined") {
         localStorage.setItem("rememberEmail", formData.email);
       }
 
-      // Redirect based on user role
       const user = result.data;
       if (user.role === "ADMIN" || user.role === "SUPER_ADMIN") {
         router.push("/admin/dashboard");
@@ -51,8 +45,10 @@ export default function Login() {
         router.push("/");
       }
     } else {
-      console.error("Login error : ", result.error);
-      setError(result.error || "Une erreur s'est produite lors de la connexion");
+      notify.error(
+        result.error || "Impossible de se connecter. Vérifiez vos identifiants.",
+        result.technical
+      );
     }
 
     setIsLoading(false);
@@ -78,12 +74,6 @@ export default function Login() {
             <p className="text-gray-500 mb-6">
               Connectez-vous pour accéder à votre tableau de bord.
             </p>
-
-            {error && (
-              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                <p className="text-red-700 text-sm">{error}</p>
-              </div>
-            )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <input

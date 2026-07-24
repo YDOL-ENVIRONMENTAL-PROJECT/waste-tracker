@@ -1,8 +1,8 @@
 import axios from "axios";
+import { logTechnical } from "@/lib/notify";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api";
 
-// Création de l'instance unique partagée
 export const apiClient = axios.create({
   baseURL: BASE_URL,
   headers: {
@@ -10,7 +10,6 @@ export const apiClient = axios.create({
   },
 });
 
-// Intercepteur pour injecter automatiquement le token Bearer
 apiClient.interceptors.request.use(
   (config) => {
     if (typeof window !== "undefined") {
@@ -24,26 +23,58 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Intercepteur de réponse pour gérer la déconnexion automatique sur erreur 401
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response && error.response.status === 401) {
-      if (typeof window !== "undefined") {
+      const url = error.config?.url || "";
+      // Don't redirect during login/logout/heartbeat — let the caller handle it
+      const isAuthAttempt =
+        url.includes("/auth/login") ||
+        url.includes("/auth/logout") ||
+        url.includes("/auth/heartbeat");
+
+      if (!isAuthAttempt && typeof window !== "undefined") {
+        logTechnical("session.expired", error);
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-
         window.location.href = "/connexion";
       }
-      return Promise.reject(new Error("Session expirée"));
+      return Promise.reject(error);
     }
     return Promise.reject(error);
   }
 );
 
 /**
- * Helper générique pour formater les messages d'erreur d'Axios
+ * Builds a technical snapshot from an Axios (or other) error for console debugging.
  */
+export function getTechnicalError(error) {
+  if (!error) return null;
+  return {
+    message: error.message,
+    status: error.response?.status,
+    data: error.response?.data,
+    url: error.config?.url,
+    method: error.config?.method,
+  };
+}
+
+/**
+ * Prefer a clear user message. Never expose backend/technical text to the UI.
+ * Logs the full technical payload to the console.
+ */
+export function fail(context, error, userMessage) {
+  logTechnical(context, error);
+  return {
+    success: false,
+    error: userMessage,
+    technical: getTechnicalError(error),
+  };
+}
+
+/** @deprecated Prefer fail() — kept for gradual migration */
 export const getErrorMessage = (error, defaultMessage = "Une erreur est survenue") => {
-  return error.response?.data?.message || error.message || defaultMessage;
+  logTechnical("getErrorMessage", error);
+  return defaultMessage;
 };

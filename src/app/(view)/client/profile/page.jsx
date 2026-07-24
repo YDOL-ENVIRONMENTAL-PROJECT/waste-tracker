@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchCurrentUserProfile, updateProfile } from "@/services/user";
 import { LoadingIcon } from "@/components/ui/Loading";
+import { notify } from "@/lib/notify";
 
 function readImageAsDataUrl(file) {
   return new Promise((resolve, reject) => {
@@ -24,40 +25,43 @@ export default function ClientProfile() {
   const { user: authUser, isLoading: authLoading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
   const [client, setClient] = useState(null);
   const fileInputRef = useRef(null);
 
   // 🟢 FONCTION UNIQUE DE RÉCUPÉRATION (GET)
   const loadProfile = async () => {
-    if (authLoading) return;
+    if (authLoading) return false;
 
-    try {
-      console.log("[API GET Request] Triggered - get user profile");
-      
-      const response = await fetchCurrentUserProfile();
-      
-      console.log("[API GET Response] user profile:", response);
+    console.log("[API GET Request] Triggered - get user profile");
 
-      const profile = response?.data || response;
+    const response = await fetchCurrentUserProfile();
 
-      setClient({
-        id: profile?.id,
-        accountType: profile?.accountType || "INDIVIDUAL",
-        firstName: profile?.firstName || "",
-        lastName: profile?.lastName || "",
-        name: profile?.name || "",
-        email: profile?.email || authUser?.email || "",
-        phone: profile?.phone || "",
-        town: profile?.town || "",
-        quarter: profile?.quarter || "",
-        type: profile?.type || "CLASSIC",
-        photo: profile?.profilePicture || "",
-      });
-    } catch (err) {
-      console.error("[API GET Error] Failed to fetch profile:", err);
-      setError(err.message || "Impossible de charger le profil");
+    console.log("[API GET Response] user profile:", response);
+
+    if (!response.success) {
+      notify.error(
+        response.error || "Impossible de charger le profil",
+        response.technical
+      );
+      return false;
     }
+
+    const profile = response.data;
+
+    setClient({
+      id: profile?.id,
+      accountType: profile?.accountType || "INDIVIDUAL",
+      firstName: profile?.firstName || "",
+      lastName: profile?.lastName || "",
+      name: profile?.name || "",
+      email: profile?.email || authUser?.email || "",
+      phone: profile?.phone || "",
+      town: profile?.town || "",
+      quarter: profile?.quarter || "",
+      type: profile?.type || "CLASSIC",
+      photo: profile?.profilePicture || "",
+    });
+    return true;
   };
 
   // Chargement initial au montage du composant
@@ -89,7 +93,7 @@ export default function ClientProfile() {
         photo: dataUrl,
       });
     } catch {
-      setError("Impossible de charger la photo de profil");
+      notify.error("Impossible de charger la photo de profil");
     }
   };
 
@@ -97,48 +101,46 @@ export default function ClientProfile() {
   const saveChanges = async () => {
     if (!client?.id) return;
 
-    // Début du chargement visible à l'écran
     setIsLoading(true);
-    setError("");
 
-    try {
-      const payload =
-        client.accountType === "ENTERPRISE"
-          ? {
-              name: client.name,
-              email: client.email,
-              phone: client.phone,
-              town: client.town,
-              quarter: client.quarter,
-              profilePicture: client.photo || null,
-            }
-          : {
-              firstName: client.firstName,
-              lastName: client.lastName,
-              email: client.email,
-              phone: client.phone,
-              town: client.town,
-              quarter: client.quarter,
-              profilePicture: client.photo || null,
-            };
+    const payload =
+      client.accountType === "ENTERPRISE"
+        ? {
+            name: client.name,
+            email: client.email,
+            phone: client.phone,
+            town: client.town,
+            quarter: client.quarter,
+            profilePicture: client.photo || null,
+          }
+        : {
+            firstName: client.firstName,
+            lastName: client.lastName,
+            email: client.email,
+            phone: client.phone,
+            town: client.town,
+            quarter: client.quarter,
+            profilePicture: client.photo || null,
+          };
 
-      // 1. LOG ET APPEL DU PUT (UPDATE)
-      console.log("[API PUT Request] Triggered - update user profile with payload:", payload);
+    console.log("[API PUT Request] Triggered - update user profile with payload:", payload);
 
-      const updateResponse = await updateProfile(payload);
+    const updateResponse = await updateProfile(payload);
 
-      console.log("[API PUT Response] update response:", updateResponse);
+    console.log("[API PUT Response] update response:", updateResponse);
 
+    if (updateResponse.success) {
       await loadProfile();
-
       setIsEditing(false);
-    } catch (err) {
-      console.error("[API Process Error] Failed during update/re-fetch sequence:", err);
-      setError(err.message || "Impossible de mettre à jour le profil");
-    } finally {
-      // Fin du chargement
-      setIsLoading(false);
+      notify.success("Profil mis à jour");
+    } else {
+      notify.error(
+        updateResponse.error || "Impossible de mettre à jour le profil",
+        updateResponse.technical
+      );
     }
+
+    setIsLoading(false);
   };
 
   if (authLoading || isLoading) {
@@ -153,7 +155,7 @@ export default function ClientProfile() {
   if (!client) {
     return (
       <div className="w-full flex justify-center bg-green-50 p-10">
-        <p className="text-red-600">{error || "Profil introuvable"}</p>
+        <p className="text-gray-600">Profil introuvable</p>
       </div>
     );
   }
@@ -166,12 +168,6 @@ export default function ClientProfile() {
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-10">
           Mon Profil
         </h1>
-
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
-            {error}
-          </div>
-        )}
 
         <div className="flex flex-col items-center mb-10">
           <div className="relative">

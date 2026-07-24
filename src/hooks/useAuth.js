@@ -22,15 +22,22 @@ export function useAuth() {
       }
 
       try {
-        const profile = await fetchCurrentUserProfile();
-        const mergedUser = { ...currentUser, ...profile };
-        setUser(mergedUser);
-        setIsAuthenticated(true);
+        const profileResult = await fetchCurrentUserProfile();
+        if (profileResult.success) {
+          const mergedUser = { ...currentUser, ...profileResult.data };
+          setUser(mergedUser);
+          setIsAuthenticated(true);
 
-        if (typeof window !== "undefined") {
-          localStorage.setItem("user", JSON.stringify(mergedUser));
+          if (typeof window !== "undefined") {
+            localStorage.setItem("user", JSON.stringify(mergedUser));
+          }
+        } else {
+          console.error("[useAuth.loadUser]", profileResult.technical || profileResult.error);
+          setUser(currentUser);
+          setIsAuthenticated(true);
         }
-      } catch {
+      } catch (error) {
+        console.error("[useAuth.loadUser]", error);
         setUser(currentUser);
         setIsAuthenticated(true);
       } finally {
@@ -45,13 +52,16 @@ export function useAuth() {
     const result = await auth.login(email, password);
     if (result.success) {
       try {
-        const profile = await fetchCurrentUserProfile();
-        const mergedUser = { ...result.data, ...profile };
+        const profileResult = await fetchCurrentUserProfile();
+        const mergedUser = profileResult.success
+          ? { ...result.data, ...profileResult.data }
+          : result.data;
         setUser(mergedUser);
         if (typeof window !== "undefined") {
           localStorage.setItem("user", JSON.stringify(mergedUser));
         }
-      } catch {
+      } catch (error) {
+        console.error("[useAuth.login]", error);
         setUser(result.data);
       }
       setIsAuthenticated(true);
@@ -59,8 +69,8 @@ export function useAuth() {
     return result;
   };
 
-  const logout = () => {
-    auth.logout();
+  const logout = async () => {
+    await auth.logout();
     setUser(null);
     setIsAuthenticated(false);
   };
@@ -69,13 +79,16 @@ export function useAuth() {
     const result = await auth.register(userData);
     if (result.success) {
       try {
-        const profile = await fetchCurrentUserProfile();
-        const mergedUser = { ...result.data, ...profile };
+        const profileResult = await fetchCurrentUserProfile();
+        const mergedUser = profileResult.success
+          ? { ...result.data, ...profileResult.data }
+          : result.data;
         setUser(mergedUser);
         if (typeof window !== "undefined") {
           localStorage.setItem("user", JSON.stringify(mergedUser));
         }
-      } catch {
+      } catch (error) {
+        console.error("[useAuth.register]", error);
         setUser(result.data);
       }
       setIsAuthenticated(true);

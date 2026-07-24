@@ -11,6 +11,7 @@ import { PersonOff } from "@mui/icons-material";
 import StarIcon from "@mui/icons-material/Star";
 import { useAuth } from "@/hooks/useAuth";
 import { clients } from "@/services/client";
+import { notify } from "@/lib/notify";
 
 export default function ClientList() {
   const { user } = useAuth();
@@ -19,7 +20,6 @@ export default function ClientList() {
   // États pour la liste des clients actifs
   const [clientList, setClientList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [apiError, setApiError] = useState("");
 
   const [search, setSearch] = useState("");
   const [filterBy, setFilterBy] = useState("ville");      
@@ -38,12 +38,14 @@ export default function ClientList() {
   useEffect(() => {
     const fetchClients = async () => {
       setIsLoading(true);
-      setApiError("");
       const result = await clients.getAll();
       if (result.success) {
         setClientList(result.data || []);
       } else {
-        setApiError(result.error || "Impossible de charger les clients.");
+        notify.error(
+          result.error || "Impossible de charger les clients",
+          result.technical
+        );
       }
       setIsLoading(false);
     };
@@ -82,8 +84,12 @@ export default function ClientList() {
         if (archivedClient) {
           setArchivedList((prev) => [archivedClient, ...prev]);
         }
+        notify.success("Client archivé");
       } else {
-        alert(result.error || "Une erreur est survenue lors de l'archivage.");
+        notify.error(
+          result.error || "Impossible d'archiver ce client",
+          result.technical
+        );
       }
     }
   };
@@ -134,12 +140,6 @@ export default function ClientList() {
 
       {/* BLOC PRINCIPAL : CLIENTS ACTIFS */}
       <div className="space-y-4">
-        {apiError && (
-          <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm">
-            {apiError}
-          </div>
-        )}
-
         {/* SEARCH + FILTERS */}
         <div className="flex gap-4 flex-wrap items-center">
           <input
