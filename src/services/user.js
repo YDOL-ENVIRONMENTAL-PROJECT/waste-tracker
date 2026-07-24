@@ -88,14 +88,3 @@ export async function updateProfile(data) {
     return { success: false, error: getErrorMessage(error, "Erreur lors de la mise à jour du profil") };
   }
 }
-
-export async function updateAdminProfile(id, data) {
-  try {
-    const response = await apiClient.put(`/admin/${id}`, data);
-    const authUser = auth.getCurrentUser();
-    const normalized = normalizeAdmin(response.data, authUser);
-    return { success: true, data: normalized };
-  } catch (error) {
-    return { success: false, error: getErrorMessage(error, "Erreur lors de la mise à jour du profil administrateur") };
-  }
-}

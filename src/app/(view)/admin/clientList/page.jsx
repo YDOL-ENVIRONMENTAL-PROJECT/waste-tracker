@@ -194,7 +194,7 @@ export default function ClientList() {
             <thead className="bg-green-600 text-gray-200">
               <tr className="text-left">
                 <th className="px-6 py-4">Photo</th>
-                <th className="px-6 py-4">Nom</th>
+                <th className="px-6 py-4">Nom Complet</th>
                 <th className="px-6 py-4">Email</th>
                 <th className="px-6 py-4">Téléphone</th>
                 <th className="px-6 py-4">Ville</th>
@@ -210,7 +210,7 @@ export default function ClientList() {
             <tbody>
               {filteredClients.map((client) => {
                 const displayName =
-                  client.category === "INDIVIDUAL"
+                  client.name === null
                     ? `${client.firstName || ""} ${client.lastName || ""}`
                     : client.name || "—";
 

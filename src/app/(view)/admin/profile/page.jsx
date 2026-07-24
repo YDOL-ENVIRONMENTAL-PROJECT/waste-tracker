@@ -1,54 +1,56 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import EditIcon from "@mui/icons-material/Edit";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import SaveIcon from "@mui/icons-material/Save";
+import CameraAltIcon from "@mui/icons-material/CameraAlt";
+import CancelIcon from "@mui/icons-material/Cancel"; // Nouvel import pour supprimer la photo
 import { User } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/useAuth";
-import { fetchCurrentUserProfile, updateAdminProfile } from "@/services/user";
+import { fetchCurrentUserProfile, updateProfile } from "@/services/user";
 import { LoadingIcon } from "@/components/ui/Loading";
 
 export default function AdminProfile() {
   const { user: authUser, isLoading: authLoading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false); // État pour le chargement de la sauvegarde
   const [error, setError] = useState("");
   const [admin, setAdmin] = useState(null);
+  
+  const fileInputRef = useRef(null);
+
+  // Fonction isolée pour charger ou rafraîchir le profil depuis le backend
+  const loadProfile = async () => {
+    try {
+      const response = await fetchCurrentUserProfile();
+      console.log("Profil utilisateur :", response);
+      const profile = response?.data || response;
+      
+      setAdmin({
+        id: profile?.id,
+        firstName: profile?.firstName || profile?.name || "",
+        lastName: profile?.lastName || profile?.surname || "",
+        email: profile?.email || authUser?.email || "",
+        phone: profile?.phone || "",
+        site: profile?.site || "",
+        role: profile?.role || authUser?.role,
+        photo: profile?.profilePicture || "",
+      });
+    } catch (err) {
+      setError(err.message || "Impossible de charger le profil");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadProfile = async () => {
-      if (authLoading) return;
-
-      try {
-        console.log("[API GET Request] Triggered - get admin profile");
-
-        const response = await fetchCurrentUserProfile();
-
-        console.log("[API GET Response] admin profile:", response);
-
-        const profile = response?.data || response;
-        
-        setAdmin({
-          id: profile?.id,
-          firstName: profile?.firstName || profile?.name || "",
-          lastName: profile?.lastName || profile?.surname || "",
-          email: profile?.email || authUser?.email || "",
-          phone: profile?.phone || "",
-          site: profile?.site || "",
-          role: profile?.role || authUser?.role,
-          photo: profile?.profilePicture || "",
-        });
-      } catch (err) {
-        setError(err.message || "Impossible de charger le profil");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadProfile();
+    if (!authLoading) {
+      loadProfile();
+    }
   }, [authLoading, authUser]);
 
   const handleChange = (e) => {
@@ -58,42 +60,77 @@ export default function AdminProfile() {
     });
   };
 
-  const saveChanges = async () => {
-    if (!admin?.id) return;
-
-    try {
-      const updated = await updateAdminProfile(admin.id, {
-        firstName: admin.firstName,
-        lastName: admin.lastName,
-        email: admin.email,
-        phone: admin.phone,
-        site: admin.site,
-        role: admin.role,
-        profilePicture: admin.photo || null,
-      });
-
-      setAdmin({
-        ...admin,
-        firstName: updated.firstName,
-        lastName: updated.lastName,
-        email: updated.email,
-        phone: updated.phone,
-        site: updated.site,
-        role: updated.role,
-        photo: updated.profilePicture || "",
-      });
-      setIsEditing(false);
-      setError("");
-    } catch (err) {
-      setError(err.message || "Impossible de mettre à jour le profil");
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAdmin((prev) => ({
+          ...prev,
+          photo: reader.result,
+        }));
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  if (authLoading || isLoading) {
+  // Fonction pour supprimer la photo actuelle
+  const handleRemovePhoto = () => {
+    setAdmin((prev) => ({
+      ...prev,
+      photo: "", // Réinitialise l'image côté front
+    }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ""; // Réinitialise l'input file HTML
+    }
+  };
+
+  const saveChanges = async () => {
+    if (!admin?.id) return;
+
+    setIsSaving(true); // Active l'écran de chargement de sauvegarde
+    setError("");
+
+    const payload = {
+      firstName: admin.firstName,
+      lastName: admin.lastName,
+      email: admin.email,
+      phone: admin.phone,
+      site: admin.site,
+      role: admin.role,
+      profilePicture: admin.photo && admin.photo.trim() !== "" ? admin.photo : null, // Si vide, envoie null pour supprimer sur le serveur
+    };
+
+    try {
+      // 1. Envoi des modifications au backend
+      const result = await updateProfile(payload);
+
+      if (result.success) {
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(result.data));
+        }
+      
+        // 2. GET des nouvelles infos fraîches du backend avant de couper le loading
+        await loadProfile();
+        setIsEditing(false);
+      } else {
+        setError(result.error || "Impossible de mettre à jour le profil");
+      }
+    } catch (err) {
+      setError(err.message || "Impossible de mettre à jour le profil");
+    } finally {
+      setIsSaving(false); // Désactive le chargement dans tous les cas
+    }
+  };
+
+  // Rendu de chargement initial OU pendant la sauvegarde/rafraîchissement
+  if (authLoading || isLoading || isSaving) {
     return (
       <div className="w-full flex flex-col items-center justify-center bg-green-50 p-20 rounded-2xl">
         <LoadingIcon size="lg" />
-        <p className="text-emerald-700 font-medium mt-6 animate-pulse">Chargement du profil...</p>
+        <p className="text-emerald-700 font-medium mt-6 animate-pulse">
+          {isSaving ? "Enregistrement et synchronisation des données..." : "Chargement du profil..."}
+        </p>
       </div>
     );
   }
@@ -128,21 +165,49 @@ export default function AdminProfile() {
                   alt="photo profil"
                   width={200}
                   height={200}
+                  className="object-cover w-full h-full"
                 />
               ) : (
                 <User size={48} />
               )}
             </div>
 
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handlePhotoChange}
+              accept="image/*"
+              className="hidden"
+            />
+
             {isEditing && (
-              <button className="absolute bottom-0 right-0 bg-green-600 text-white p-2 rounded-full shadow">
-                <EditIcon fontSize="small" />
-              </button>
+              <div className="absolute bottom-0 right-0 flex gap-2 translate-y-2">
+                {/* Bouton pour changer/ajouter une photo */}
+                <button 
+                  onClick={() => fileInputRef.current.click()}
+                  className="bg-green-600 text-white p-2 rounded-full shadow hover:bg-green-700 transition"
+                  title="Changer de photo"
+                >
+                  <CameraAltIcon fontSize="small" />
+                </button>
+                
+                {/* Bouton de suppression (affiché uniquement s'il y a une photo) */}
+                {admin.photo && (
+                  <button 
+                    onClick={handleRemovePhoto}
+                    className="bg-red-600 text-white p-2 rounded-full shadow hover:bg-red-700 transition"
+                    title="Supprimer la photo"
+                  >
+                    <CancelIcon fontSize="small" />
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 max-w-xl mx-auto">
+          {/* Champs de formulaires restants identiques... */}
           <div className="flex flex-col gap-1">
             <label className="text-sm text-gray-500">Prénom</label>
             {isEditing ? (
@@ -154,9 +219,7 @@ export default function AdminProfile() {
                 className="border rounded-lg px-3 py-2"
               />
             ) : (
-              <p className="text-lg font-semibold text-gray-800">
-                {admin.firstName}
-              </p>
+              <p className="text-lg font-semibold text-gray-800">{admin.firstName}</p>
             )}
           </div>
 
@@ -171,9 +234,7 @@ export default function AdminProfile() {
                 className="border rounded-lg px-3 py-2"
               />
             ) : (
-              <p className="text-lg font-semibold text-gray-800">
-                {admin.lastName}
-              </p>
+              <p className="text-lg font-semibold text-gray-800">{admin.lastName}</p>
             )}
           </div>
 
@@ -188,9 +249,7 @@ export default function AdminProfile() {
                 className="border rounded-lg px-3 py-2"
               />
             ) : (
-              <p className="text-lg font-semibold text-gray-800">
-                {admin.phone || "—"}
-              </p>
+              <p className="text-lg font-semibold text-gray-800">{admin.phone || "—"}</p>
             )}
           </div>
 
@@ -205,9 +264,7 @@ export default function AdminProfile() {
                 className="border rounded-lg px-3 py-2"
               />
             ) : (
-              <p className="text-lg font-semibold text-gray-800">
-                {admin.email}
-              </p>
+              <p className="text-lg font-semibold text-gray-800">{admin.email}</p>
             )}
           </div>
 

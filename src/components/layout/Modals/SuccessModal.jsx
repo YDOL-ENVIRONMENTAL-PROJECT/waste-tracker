@@ -15,9 +15,9 @@ export default function SuccessModal({ message, onClose }) {
           Succès
         </h2>
 
-        <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+        <div className="text-gray-500 text-sm mb-6 leading-relaxed">
           {message}
-        </p>
+        </div>
 
         <button
           onClick={onClose}

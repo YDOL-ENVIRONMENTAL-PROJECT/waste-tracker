@@ -255,8 +255,8 @@ export default function Register() {
                     {/* INPUT DATE */}
                     <input
                       type="date"
-                      name="birthDate"
-                      value={formData.birthDate}
+                      name="dateOfBirth"
+                      value={formData.dateOfBirth}
                       onChange={handleChange}
                       required
                       disabled={isLoading}
