@@ -4,12 +4,14 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { auth } from "@/services/auth";
 import { notify } from "@/lib/notify";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function UpdatePassword() {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [userRole, setUserRole] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
   
   // Validations logiques
   const isIdentical = currentPassword !== "" && newPassword !== "" && currentPassword === newPassword;
@@ -68,9 +70,10 @@ export default function UpdatePassword() {
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
+              <div className="relative w-full">
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
+                  name="password"
                   placeholder="Ancien mot de passe"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
@@ -78,11 +81,26 @@ export default function UpdatePassword() {
                   required
                   disabled={isLoading}
                 />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none"
+                  disabled={isLoading}
+                  title={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                >
+                  {showPassword ? (
+                    <EyeOff size={18} className="transition-colors" />
+                  ) : (
+                    <Eye size={18} className="transition-colors" />
+                  )}
+                </button>
               </div>
 
-              <div>
+              <div className="relative w-full">
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
+                  name="password"
                   placeholder="Nouveau mot de passe"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
@@ -93,7 +111,22 @@ export default function UpdatePassword() {
                   }`}
                   required
                   disabled={isLoading}
+                  title={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                 />
+
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none"
+                  disabled={isLoading}
+                  title={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                >
+                  {showPassword ? (
+                    <EyeOff size={18} className="transition-colors" />
+                  ) : (
+                    <Eye size={18} className="transition-colors" />
+                  )}
+                </button>
                 {isIdentical && (
                   <p className="text-red-600 text-xs mt-1 font-medium">
                     Le nouveau mot de passe doit être différent de l'ancien.

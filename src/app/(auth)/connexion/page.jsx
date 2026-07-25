@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/services/auth";
 import { notify } from "@/lib/notify";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
   const router = useRouter();
@@ -14,6 +15,7 @@ export default function Login() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -87,16 +89,31 @@ export default function Login() {
                 disabled={isLoading}
               />
 
-              <input
-                type="password"
-                name="password"
-                placeholder="Mot de passe"
-                value={formData.password}
-                onChange={handleChange}
-                className="input-style"
-                required
-                disabled={isLoading}
-              />
+              <div className="relative w-full">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Mot de passe"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className="input-style pr-10 w-full"
+                  required
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer bg-transparent border-none"
+                  disabled={isLoading}
+                  title={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                >
+                  {showPassword ? (
+                    <EyeOff size={18} className="transition-colors" />
+                  ) : (
+                    <Eye size={18} className="transition-colors" />
+                  )}
+                </button>
+              </div>
 
               <div className="flex justify-between text-sm">
                 <label className="flex items-center gap-2 text-gray-600">
