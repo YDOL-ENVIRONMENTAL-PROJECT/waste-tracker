@@ -9,7 +9,7 @@ import { Toaster } from "react-hot-toast";
 export function AppToaster() {
   return (
     <Toaster
-      position="top-right"
+      position="bottom-right"
       reverseOrder={false}
       toastOptions={{
         className: "text-sm",
