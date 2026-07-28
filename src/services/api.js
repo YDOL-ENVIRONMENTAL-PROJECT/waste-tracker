@@ -65,16 +65,24 @@ export function getTechnicalError(error) {
  * Logs the full technical payload to the console.
  */
 export function fail(context, error, userMessage) {
-  logTechnical(context, error);
+  let sanitizedError = error;
+  if (!error || (typeof error === "object" && Object.keys(error).length === 0)) {
+    sanitizedError = new Error(`Échec de la requête détecté dans le contexte : ${context} (Erreur d'origine vide ou inconnue)`);
+  }
+  logTechnical(context, sanitizedError);
   return {
     success: false,
-    error: userMessage,
+    error: userMessage || "Une erreur réseau ou serveur est survenue.",
     technical: getTechnicalError(error),
   };
 }
 
 /** @deprecated Prefer fail() — kept for gradual migration */
 export const getErrorMessage = (error, defaultMessage = "Une erreur est survenue") => {
-  logTechnical("getErrorMessage", error);
+  let sanitizedError = error;
+  if (!error || (typeof error === "object" && Object.keys(error).length === 0)) {
+    sanitizedError = new Error("Erreur inconnue ou objet vide détecté");
+  }
+  logTechnical("getErrorMessage", sanitizedError);
   return defaultMessage;
 };

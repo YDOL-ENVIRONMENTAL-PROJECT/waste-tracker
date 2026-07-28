@@ -6,9 +6,9 @@ import toast from "react-hot-toast";
 export function logTechnical(context, payload) {
   if (typeof console === "undefined") return;
 
-  if (payload instanceof Error || payload?.isAxiosError) {
+  if (payload instanceof Error || payload?.isAxiosError || (payload && payload === 'object')) {
     console.error(`[${context}]`, {
-      message: payload.message,
+      message: payload.message || "Erreur inconnue ou non spécifiée",
       status: payload.response?.status,
       data: payload.response?.data,
       url: payload.config?.url,
