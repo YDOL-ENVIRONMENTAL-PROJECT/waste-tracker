@@ -82,7 +82,7 @@ export default function AdminList() {
       await fetchAdmins();
       notify.success("Administrateurs archivés");
     } catch (err) {
-      notify.error("Impossible d'archiver certains administrateurs", err);
+      notify.error("Impossible de supprimer certains administrateurs", err);
     } finally {
       setIsArchiving(false);
     }

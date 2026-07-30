@@ -50,14 +50,14 @@ export default function DriverList() {
 
   // Action d'archivage d'un conducteur
   const handleArchive = async (id, firstName, lastName) => {
-    if (confirm(`Voulez-vous vraiment archiver le conducteur ${firstName} ${lastName} ?`)) {
+    if (confirm(`Voulez-vous vraiment supprimer le conducteur ${firstName} ${lastName} ?`)) {
       const result = await drivers.archive(id);
       if (result.success) {
         setDriverList((prev) => prev.filter((d) => d.id !== id));
         notify.success("Conducteur archivé");
       } else {
         notify.error(
-          result.error || "Impossible d'archiver ce conducteur",
+          result.error || "Impossible de supprimer ce conducteur",
           result.technical
         );
       }
@@ -304,7 +304,7 @@ export default function DriverList() {
                         {/* DELETE/ARCHIVE BUTTON */}
                         <button
                           onClick={() => handleArchive(driver.id, driver.firstName, driver.lastName)}
-                          title="archiver"
+                          title="supprimer"
                           className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 hover:bg-red-100 text-red-600 transition"
                         >
                           <DeleteIcon fontSize="small"/>

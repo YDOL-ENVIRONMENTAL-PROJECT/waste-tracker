@@ -48,14 +48,14 @@ export default function VehicleList() {
 
   // Fonction pour gérer l'archivage/suppression d'un véhicule
   const handleArchive = async (id, plate) => {
-    if (confirm(`Voulez-vous vraiment archiver le véhicule immatriculé ${plate} ?`)) {
+    if (confirm(`Voulez-vous vraiment supprimer le véhicule immatriculé ${plate} ?`)) {
       const result = await vehicles.archive(id);
       if (result.success) {
         setVehicleList((prev) => prev.filter((v) => v.id !== id));
         notify.success("Véhicule archivé");
       } else {
         notify.error(
-          result.error || "Impossible d'archiver ce véhicule",
+          result.error || "Impossible de supprimer ce véhicule",
           result.technical
         );
       }

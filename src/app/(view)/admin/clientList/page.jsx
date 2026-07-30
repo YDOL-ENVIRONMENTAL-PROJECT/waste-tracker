@@ -75,7 +75,7 @@ export default function ClientList() {
 
   // Fonction pour gérer l'archivage d'un client actif
   const handleArchive = async (id, displayName) => {
-    if (confirm(`Voulez-vous vraiment archiver le client ${displayName} ?`)) {
+    if (confirm(`Voulez-vous vraiment supprimer le client ${displayName} ?`)) {
       const result = await clients.archive(id);
       if (result.success) {
         const archivedClient = clientList.find((c) => c.id === id);
@@ -87,7 +87,7 @@ export default function ClientList() {
         notify.success("Client archivé");
       } else {
         notify.error(
-          result.error || "Impossible d'archiver ce client",
+          result.error || "Impossible de supprimer ce client",
           result.technical
         );
       }
@@ -235,7 +235,7 @@ export default function ClientList() {
                             <button
                               onClick={() => handleArchive(client.id, displayName)}
                               className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-600 border border-gray-100 hover:border-red-100 transition cursor-pointer"
-                              title="Archiver"
+                              title="Supprimer"
                             >
                               <DeleteIcon fontSize="small" />
                             </button>
