@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import ConfirmationModal from "@/components/layout/Modals/ConfirmationModal";
+import ConfirmationModal from "@/components/layout/Modals/Confirmation";
 import { notify } from "@/lib/notify";
 import { garbagebins } from "@/services/garbagebin";
 import { Loader2, MapPin, Camera, Info, ArrowLeft, ArrowRight, Check } from "lucide-react";
@@ -137,7 +137,7 @@ export default function AddGarbageBin() {
         photo: formData.photo,
         latitude: coordinates.latitude,
         longitude: coordinates.longitude,
-        status: "ACTIVE"
+        status: "EMPTY"
       };
 
       const result = await garbagebins.create(requestData);

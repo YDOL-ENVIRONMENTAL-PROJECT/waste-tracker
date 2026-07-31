@@ -5,13 +5,13 @@ import Link from "next/link";
 
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import DeleteIcon from "@mui/icons-material/Delete";
-import CloseIcon from "@mui/icons-material/Close";
-import { Filter, Loader2, Calendar, MapPin, ShieldCheck, Briefcase, User, Archive, History } from "lucide-react";
+import { Filter, Loader2, History, Archive } from "lucide-react";
 import { PersonOff } from "@mui/icons-material";
 import StarIcon from "@mui/icons-material/Star";
 import { useAuth } from "@/hooks/useAuth";
 import { clients } from "@/services/client";
 import { notify } from "@/lib/notify";
+import ClientDetails from "@/components/layout/Modals/ClientDetails";
 
 export default function ClientList() {
   const { user } = useAuth();
@@ -22,17 +22,16 @@ export default function ClientList() {
   const [isLoading, setIsLoading] = useState(true);
 
   const [search, setSearch] = useState("");
-  const [filterBy, setFilterBy] = useState("ville");      
-  const [filterValue, setFilterValue] = useState("");     
+  const [filterBy, setFilterBy] = useState("ville");
+  const [filterValue, setFilterValue] = useState("");
 
   // ÉTATS POUR LES CLIENTS ARCHIVÉS (EN BAS)
   const [archivedList, setArchivedList] = useState([]);
   const [showArchived, setShowArchived] = useState(false);
   const [isLoadingArchived, setIsLoadingArchived] = useState(false);
 
-  // États pour la modale de détails
+  // État pour la modale de détails (le composant ClientDetails gère son propre rendu)
   const [selectedClient, setSelectedClient] = useState(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
   // Récupération des clients actifs au montage du composant
   useEffect(() => {
@@ -60,7 +59,7 @@ export default function ClientList() {
     }
 
     setShowArchived(true);
-    
+
     if (typeof clients.getArchived === "function") {
       setIsLoadingArchived(true);
       const result = await clients.getArchived();
@@ -69,7 +68,7 @@ export default function ClientList() {
       }
       setIsLoadingArchived(false);
     } else {
-      setArchivedList([]); 
+      setArchivedList([]);
     }
   };
 
@@ -80,7 +79,7 @@ export default function ClientList() {
       if (result.success) {
         const archivedClient = clientList.find((c) => c.id === id);
         setClientList((prev) => prev.filter((c) => c.id !== id));
-        
+
         if (archivedClient) {
           setArchivedList((prev) => [archivedClient, ...prev]);
         }
@@ -94,19 +93,14 @@ export default function ClientList() {
     }
   };
 
-  const handleOpenDetails = (client) => {
-    setSelectedClient(client);
-    setShowDetailsModal(true);
-  };
-
   // Helper pour formater les données d'un client
   const getClientMeta = (client) => {
     const isParticulier = client.name === null || client.name === "string";
     return {
       categoryLabel: isParticulier ? "PARTICULIER" : "ENTREPRISE",
-      displayName: isParticulier 
+      displayName: isParticulier
         ? `${client.firstName || ""} ${client.lastName || ""}`.trim() || "Particulier sans nom"
-        : client.name
+        : client.name,
     };
   };
 
@@ -225,7 +219,7 @@ export default function ClientList() {
                       <td className="px-6 py-4">
                         <div className="flex justify-center gap-3">
                           <button
-                            onClick={() => handleOpenDetails(client)}
+                            onClick={() => setSelectedClient(client)}
                             className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition cursor-pointer"
                             title="Voir les détails"
                           >
@@ -251,7 +245,7 @@ export default function ClientList() {
         )}
       </div>
 
-      {/* LIEN VERS LES ANCIENS CLIENTS (Collé directement en dessous à gauche) */}
+      {/* LIEN VERS LES ANCIENS CLIENTS */}
       <div className="flex justify-start pt-1">
         <button
           onClick={toggleArchivedSection}
@@ -311,7 +305,7 @@ export default function ClientList() {
                         <td className="px-6 py-4">{client.town || "N/A"}</td>
                         <td className="px-6 py-4 text-center">
                           <button
-                            onClick={() => handleOpenDetails(client)}
+                            onClick={() => setSelectedClient(client)}
                             className="w-8 h-8 inline-flex items-center justify-center rounded-full bg-white hover:bg-gray-200 border text-gray-600 shadow-2xs cursor-pointer"
                             title="Voir l'historique"
                           >
@@ -328,80 +322,10 @@ export default function ClientList() {
         </div>
       )}
 
-      {/* MODALE DE DÉTAILS UNIFIÉE */}
-      {showDetailsModal && selectedClient && (() => {
-        const { displayName, categoryLabel } = getClientMeta(selectedClient);
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs transition-opacity">
-            <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 border mx-4 relative transform transition-all">
-              <button 
-                onClick={() => setShowDetailsModal(false)}
-                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors cursor-pointer"
-              >
-                <CloseIcon fontSize="small" />
-              </button>
-
-              <div className="flex items-center gap-4 border-b pb-4 mb-5">
-                <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center text-green-700 font-bold text-xl">
-                  {displayName.charAt(0)}
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">{displayName}</h3>
-                  <div className="flex gap-2 mt-1 flex-wrap">
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
-                      categoryLabel === "ENTREPRISE" ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-purple-50 text-purple-700 border-purple-200"
-                    }`}>
-                      {categoryLabel === "ENTREPRISE" ? <Briefcase size={12} /> : <User size={12} />}
-                      {categoryLabel === "ENTREPRISE" ? "Entreprise" : "Particulier"}
-                    </span>
-                    <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                      selectedClient.type === "PREMIUM" ? "bg-amber-100 text-amber-800 border border-amber-200" : "bg-gray-100 text-gray-700 border border-gray-200"
-                    }`}>
-                      {selectedClient.type === "PREMIUM" && <StarIcon sx={{ fontSize: 12 }} />}
-                      {selectedClient.type || "CLASSIC"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm mb-6">
-                <div className="space-y-1">
-                  <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">Adresse mail</span>
-                  <p className="text-gray-800 font-medium break-all">{selectedClient.email || "N/A"}</p>
-                </div>
-                <div className="space-y-1">
-                  <span className="text-xs text-gray-400 font-medium uppercase tracking-wider">Téléphone</span>
-                  <p className="text-gray-800 font-medium">{selectedClient.phone || "N/A"}</p>
-                </div>
-                <div className="space-y-1 bg-gray-50 p-2.5 rounded-xl border border-gray-100">
-                  <span className="text-xs text-gray-400 font-medium uppercase tracking-wider flex items-center gap-1">
-                    <MapPin size={12} className="text-gray-500" /> Localisation
-                  </span>
-                  <p className="text-gray-800 font-medium mt-0.5">
-                    {selectedClient.town || "N/A"} {selectedClient.quarter && selectedClient.quarter !== "string" ? `, Qrt. ${selectedClient.quarter}` : ""}
-                  </p>
-                </div>
-                <div className="space-y-1 bg-gray-50 p-2.5 rounded-xl border border-gray-100">
-                  <span className="text-xs text-gray-400 font-medium uppercase tracking-wider flex items-center gap-1">
-                    <Calendar size={12} className="text-gray-500" /> Date de naissance
-                  </span>
-                  <p className="text-gray-800 font-medium mt-0.5">
-                    {selectedClient.dateOfBirth ? new Date(selectedClient.dateOfBirth).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "N/A"}
-                  </p>
-                </div>
-                <div className="space-y-1 sm:col-span-2 border-t pt-3 mt-1">
-                  <span className="text-xs text-gray-400 font-medium uppercase tracking-wider flex items-center gap-1">
-                    <ShieldCheck size={12} className="text-gray-500" /> Statut & Historique
-                  </span>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Compte créé le : <span className="font-semibold text-gray-700">{selectedClient.createdAt ? new Date(selectedClient.createdAt).toLocaleString("fr-FR") : "N/A"}</span>
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      })()}
+      {/* MODALE DE DÉTAILS (composant dédié, importé) */}
+      {selectedClient && (
+        <ClientDetails client={selectedClient} onClose={() => setSelectedClient(null)} />
+      )}
 
     </div>
   );

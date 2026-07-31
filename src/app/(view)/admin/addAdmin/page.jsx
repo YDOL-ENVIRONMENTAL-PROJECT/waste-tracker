@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import SuccessModal from "@/components/layout/Modals/SuccessModal";
-import ConfirmationModal from "@/components/layout/Modals/ConfirmationModal";
+import SuccessModal from "@/components/layout/Modals/Success";
+import ConfirmationModal from "@/components/layout/Modals/Confirmation";
 import { admins } from "@/services/admin";
 import { notify } from "@/lib/notify";
 

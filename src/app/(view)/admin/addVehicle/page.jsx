@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import ConfirmationModal from "@/components/layout/Modals/ConfirmationModal";
+import ConfirmationModal from "@/components/layout/Modals/Confirmation";
 import { notify } from "@/lib/notify";
 
 export default function AddVehicle() {

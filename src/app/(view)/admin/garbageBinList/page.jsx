@@ -2,15 +2,24 @@
 
 import { useState, useEffect } from "react";
 import { Filter, Loader2, MapPin, Trash2, FileText } from "lucide-react";
-import EditIcon from "@mui/icons-material/Edit";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { garbagebins } from "@/services/garbagebin"; // Adaptez le chemin d'accès selon votre arborescence
+import { garbagebins } from "@/services/garbagebin";
 import { notify } from "@/lib/notify";
+import BinDetails from "@/components/layout/Modals/BinDetails";
+
+// Reflète l'enum GarbageBinStatus côté backend — même mapping que dans BinDetails
+const STATUS_META = {
+  EMPTY: { label: "Vide", classes: "bg-green-50 text-green-700 border-green-200" },
+  FULL: { label: "Plein", classes: "bg-red-50 text-red-700 border-red-200" },
+  OUT_OF_SERVICE: { label: "Hors service", classes: "bg-gray-100 text-gray-600 border-gray-200" },
+  ARCHIVED: { label: "Archivé", classes: "bg-amber-50 text-amber-700 border-amber-200" },
+};
 
 export default function GarbageBinList() {
   const { user } = useAuth();
@@ -22,6 +31,9 @@ export default function GarbageBinList() {
 
   const [search, setSearch] = useState("");
   const [filterCity, setFilterCity] = useState("");
+
+  // État pour la modale de détails / édition
+  const [selectedBin, setSelectedBin] = useState(null);
 
   // Récupération des bacs depuis le backend au chargement du composant
   useEffect(() => {
@@ -60,6 +72,12 @@ export default function GarbageBinList() {
         );
       }
     }
+  };
+
+  // Callback appelé par BinDetails après une édition réussie : on synchronise la liste
+  const handleBinUpdated = (updatedBin) => {
+    setBinList((prev) => prev.map((bin) => (bin.id === updatedBin.id ? updatedBin : bin)));
+    setSelectedBin(updatedBin);
   };
 
   // Villes uniques calculées sur les données dynamiques
@@ -150,89 +168,106 @@ export default function GarbageBinList() {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {filteredBins.map((bin) => (
-            <div
-              key={bin.id}
-              className="group relative flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md hover:border-green-200 transition-all duration-200"
-            >
-              {/* IMAGE */}
-              <div className="w-32 h-32 sm:w-36 sm:h-36 shrink-0 self-center ml-4 my-4 rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
-                {bin.photo ? (
-                  <img
-                    src={bin.photo}
-                    alt={`Bac ${bin.code}`}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-gray-300">
-                    <ImageOutlinedIcon style={{ fontSize: 32 }} />
-                    <span className="text-[11px] font-medium text-gray-400">
-                      Pas de photo
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* INFO */}
-              <div className="flex flex-col justify-center gap-2.5 p-6 flex-1 min-w-0">
-                {/* CODE badge */}
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 font-mono text-2xl font-semibold px-2.5 py-1 rounded-md border border-green-100">
-                    <Trash2 size={20} />
-                    {bin.code}
-                  </span>
-                </div>
-
-                {/* Location badges */}
-                <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-                  <span className="inline-flex items-center gap-1">
-                    <MapPin size={14} className="text-gray-400" />
-                    {bin.town || "Ville inconnue"}
-                    {bin.quarter ? `, ${bin.quarter}` : ""}
-                  </span>
-                </div>
-
-                {/* Description */}
-                <div className="flex items-start gap-1.5 text-sm text-gray-500">
-                  <FileText size={14} className="text-gray-300 mt-0.5 shrink-0" />
-                  {bin.description ? (
-                    <p className="line-clamp-2">{bin.description}</p>
+          {filteredBins.map((bin) => {
+            const statusMeta = STATUS_META[bin.status];
+            return (
+              <div
+                key={bin.id}
+                className="group relative flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md hover:border-green-200 transition-all duration-200"
+              >
+                {/* IMAGE */}
+                <div className="w-32 h-32 sm:w-36 sm:h-36 shrink-0 self-center ml-4 my-4 rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
+                  {bin.photo ? (
+                    <img
+                      src={bin.photo}
+                      alt={`Bac ${bin.code}`}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
-                    <p className="italic text-gray-400">Aucune description renseignée.</p>
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-gray-300">
+                      <ImageOutlinedIcon style={{ fontSize: 32 }} />
+                      <span className="text-[11px] font-medium text-gray-400">
+                        Pas de photo
+                      </span>
+                    </div>
                   )}
                 </div>
 
-                {/* Date */}
-                <p className="text-xs text-gray-400 pt-1">
-                  Créé le {formatDate(bin.createdAt)}
-                </p>
-              </div>
+                {/* INFO */}
+                <div className="flex flex-col justify-center gap-2.5 p-6 flex-1 min-w-0">
+                  {/* CODE + STATUT */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 font-mono text-sm font-semibold px-2.5 py-1 rounded-md border border-green-100">
+                      <Trash2 size={14} />
+                      {bin.code}
+                    </span>
+                    {statusMeta && (
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${statusMeta.classes}`}>
+                        {statusMeta.label}
+                      </span>
+                    )}
+                  </div>
 
-              {/* ACTIONS (Accessibles pour le rôle SUPER_ADMIN) */}
-              {role === "SUPER_ADMIN" && (
+                  {/* Location badges */}
+                  <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                    <span className="inline-flex items-center gap-1">
+                      <MapPin size={14} className="text-gray-400" />
+                      {bin.town || "Ville inconnue"}
+                      {bin.quarter ? `, ${bin.quarter}` : ""}
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  <div className="flex items-start gap-1.5 text-sm text-gray-500">
+                    <FileText size={14} className="text-gray-300 mt-0.5 shrink-0" />
+                    {bin.description ? (
+                      <p className="line-clamp-2">{bin.description}</p>
+                    ) : (
+                      <p className="italic text-gray-400">Aucune description renseignée.</p>
+                    )}
+                  </div>
+
+                  {/* Date */}
+                  <p className="text-xs text-gray-400 pt-1">
+                    Créé le {formatDate(bin.createdAt)}
+                  </p>
+                </div>
+
+                {/* ACTIONS */}
                 <div className="flex items-start gap-2 p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  {/* EDIT LINK */}
-                  <Link
-                    href={`/admin/editGarbageBin/${bin.id}`}
-                    title="Éditer"
+                  {/* VOIR DÉTAILS — accessible à tous les rôles */}
+                  <button
+                    onClick={() => setSelectedBin(bin)}
+                    title="Voir les détails"
                     className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition"
                   >
-                    <EditIcon fontSize="small" />
-                  </Link>
-
-                  {/* DELETE/ARCHIVE BUTTON */}
-                  <button
-                    onClick={() => handleArchive(bin.id, bin.code)}
-                    title="Supprimer"
-                    className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 transition"
-                  >
-                    <DeleteIcon fontSize="small" />
+                    <VisibilityIcon fontSize="small" />
                   </button>
+
+                  {/* SUPPRIMER — réservé au SUPER_ADMIN */}
+                  {role === "SUPER_ADMIN" && (
+                    <button
+                      onClick={() => handleArchive(bin.id, bin.code)}
+                      title="Supprimer"
+                      className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 transition"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </button>
+                  )}
                 </div>
-              )}
-            </div>
-          ))}
+              </div>
+            );
+          })}
         </div>
+      )}
+
+      {/* MODALE DE DÉTAILS / ÉDITION */}
+      {selectedBin && (
+        <BinDetails
+          bin={selectedBin}
+          onClose={() => setSelectedBin(null)}
+          onUpdated={handleBinUpdated}
+        />
       )}
     </div>
   );
