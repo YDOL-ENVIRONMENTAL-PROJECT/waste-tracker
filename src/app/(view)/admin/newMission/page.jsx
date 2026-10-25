@@ -19,6 +19,7 @@ import { garbagebins } from "@/services/garbagebin";
 import { drivers as driverService } from "@/services/driver";
 import { vehicles as vehicleService } from "@/services/vehicle";
 import { collectionRequests } from "@/services/collectionRequest";
+import { withoutDrafts } from "@/services/api";
 import { notify } from "@/lib/notify";
 import { formatDate, includesText, isoLocalDateTime } from "@/lib/format";
 import { BIN_STATUS, PRIORITY, SLOTS, TOWNS, VEHICLE_STATUS } from "@/lib/labels";
@@ -45,9 +46,9 @@ function NewMissionForm() {
   const params = useSearchParams();
   const editId = params.get("edit");
 
-  const bins = useAsync(() => garbagebins.getAll(), [], { initial: [] });
+  const bins = useAsync(() => withoutDrafts(garbagebins.getAll()), [], { initial: [] });
   const drivers = useAsync(() => driverService.getAll(), [], { initial: [] });
-  const fleet = useAsync(() => vehicleService.getAll(), [], { initial: [] });
+  const fleet = useAsync(() => withoutDrafts(vehicleService.getAll()), [], { initial: [] });
   const requests = useAsync(() => collectionRequests.getAll("PENDING"), [], { initial: [] });
 
   const [form, setForm] = useState({
@@ -100,7 +101,7 @@ function NewMissionForm() {
   }, [form.purpose, selectedBins, selectedRequest]);
 
   // Chauffeurs enrichis de leur véhicule et de la distance à la cible
-  const driverRows = useMemo(() => drivers.data.map((d) => {
+  const driverRows = useMemo(() => drivers.data.filter((d) => d.status !== "PENDING").map((d) => {
     const v = fleet.data.find((x) => x.id === d.vehicleId);
     const dist = v ? distanceKm(target, [v.latitude, v.longitude]) : null;
     const usable = !v || !["BROKEN_DOWN", "OUT_OF_SERVICE"].includes(v.status);

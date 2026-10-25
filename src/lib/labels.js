@@ -23,6 +23,14 @@ export const USER_STATUS = {
   ONLINE: { label: "En ligne", tone: "green" },
   OFFLINE: { label: "Hors ligne", tone: "slate" },
   SUSPENDED: { label: "Archivé", tone: "red" },
+  PENDING: { label: "Non activé", tone: "amber" },
+};
+
+/** Activation d'un compte chauffeur. */
+export const ACTIVATION_STATUS = {
+  ACTIVE: { label: "Activé", tone: "green" },
+  PENDING: { label: "En attente d'activation", tone: "amber" },
+  EXPIRED: { label: "Lien expiré", tone: "red" },
 };
 
 export const MISSION_STATUS = {
@@ -114,7 +122,7 @@ export const SLOTS = {
 };
 
 export const PRODUCT_STATUS = {
-  DRAFT: { label: "Brouillon", tone: "slate" },
+  DRAFT: { label: "Hors vente", tone: "slate" },
   PUBLISHED: { label: "En vente", tone: "green" },
   ARCHIVED: { label: "Archivé", tone: "slate" },
 };

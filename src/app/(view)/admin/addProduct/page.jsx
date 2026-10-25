@@ -9,6 +9,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { Input, Select, Textarea } from "@/components/ui/Field";
 import ImageInput from "@/components/ui/ImageInput";
 import Spinner from "@/components/ui/Spinner";
+import { ApprovalHint, SaveButtons } from "@/components/approval/Approval";
 import { products as productService } from "@/services/product";
 import { notify } from "@/lib/notify";
 import { formatFcfa } from "@/lib/format";
@@ -31,19 +32,20 @@ function ProductForm() {
     });
   }, [id]);
 
-  const submit = async (e) => {
-    e.preventDefault();
+  const save = async (saveAsDraft) => {
+    if (!form.name.trim()) return notify.warning("Le nom du produit est obligatoire");
     setSaving(true);
-    const payload = { ...form, unitPrice: Number(form.unitPrice || 0), stock: Number(form.stock || 0), alertThreshold: Number(form.alertThreshold || 0), reference: form.reference || null };
+    const payload = { ...form, unitPrice: Number(form.unitPrice || 0), stock: Number(form.stock || 0), alertThreshold: Number(form.alertThreshold || 0), reference: form.reference || null, saveAsDraft };
     const r = id ? await productService.update(id, payload) : await productService.create(payload);
     setSaving(false);
-    if (r.success) { notify.success(id ? "Produit mis à jour" : "Produit ajouté"); router.push("/admin/productList"); } else notify.error(r.error);
+    if (r.success) { notify.success(id ? "Produit mis à jour" : r.data.draft ? "Produit enregistré en brouillon" : "Produit ajouté"); router.push("/admin/productList"); } else notify.error(r.error);
   };
 
   if (loading) return <Spinner />;
   return (
-    <form onSubmit={submit}>
+    <form onSubmit={(e) => { e.preventDefault(); save(undefined); }}>
       <PageHeader title={id ? "Modifier le produit" : "Ajouter un produit"} actions={<Link href="/admin/productList" className="btn-ghost"><ArrowLeft size={16} /> Retour</Link>} />
+      {!id && <ApprovalHint />}
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <div className="space-y-6">
           <Card>
@@ -62,7 +64,7 @@ function ProductForm() {
               <Select label="Unité de vente" value={form.unit} onChange={(e) => set({ unit: e.target.value })} options={PRODUCT_UNITS.map((u) => ({ value: u, label: u }))} />
               <Input label="Stock disponible" type="number" min="0" required value={form.stock} onChange={(e) => set({ stock: e.target.value })} />
               <Input label="Seuil d'alerte" type="number" min="0" value={form.alertThreshold} onChange={(e) => set({ alertThreshold: e.target.value })} hint="Une alerte est envoyée sous ce niveau" />
-              <Select className="sm:col-span-2" label="Statut" value={form.status} onChange={(e) => set({ status: e.target.value })} options={["PUBLISHED", "DRAFT"].map((s) => ({ value: s, label: PRODUCT_STATUS[s].label }))} />
+              <Select className="sm:col-span-2" label="Mise en vente" hint="« Hors vente » masque le produit de la boutique, même une fois validé." value={form.status} onChange={(e) => set({ status: e.target.value })} options={["PUBLISHED", "DRAFT"].map((s) => ({ value: s, label: PRODUCT_STATUS[s].label }))} />
             </div>
           </Card>
         </div>
@@ -71,9 +73,9 @@ function ProductForm() {
           <div className="px-5 pb-5"><ImageInput value={form.photo} onChange={(photo) => set({ photo })} aspect="aspect-[4/3]" /></div>
         </Card>
       </div>
-      <div className="mt-6 flex justify-end gap-2">
+      <div className="mt-6 flex flex-wrap justify-end gap-2">
         <Link href="/admin/productList" className="btn-secondary">Annuler</Link>
-        <button className="btn-primary" disabled={saving}>{saving && <Spinner />} Enregistrer</button>
+        <SaveButtons isEdit={!!id} saving={saving} onSave={save} />
       </div>
     </form>
   );
