@@ -1,274 +1,163 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Filter, Loader2, MapPin, Trash2, FileText } from "lucide-react";
-import VisibilityIcon from "@mui/icons-material/Visibility";
-import DeleteIcon from "@mui/icons-material/Delete";
-import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
-import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
+import { Archive, ClipboardPlus, Pencil, Plus, Recycle, RotateCcw } from "lucide-react";
+import PageHeader from "@/components/ui/PageHeader";
+import { Card, StatCard } from "@/components/ui/Card";
+import { StatusBadge } from "@/components/ui/Badge";
+import { DataTable, FilterPills, IconButton, RowActions, SearchInput } from "@/components/ui/Table";
+import { Select } from "@/components/ui/Field";
+import EmptyState from "@/components/ui/EmptyState";
+import { ConfirmDialog, DetailRow, Drawer } from "@/components/ui/Modal";
+import { LeafletMap } from "@/components/map";
+import { useAction, useAsync } from "@/hooks/useAsync";
 import { garbagebins } from "@/services/garbagebin";
 import { notify } from "@/lib/notify";
-import BinDetails from "@/components/layout/Modals/BinDetails";
+import { formatDateTime, includesText, timeAgo } from "@/lib/format";
+import { BIN_STATUS } from "@/lib/labels";
 
-// Reflète l'enum GarbageBinStatus côté backend — même mapping que dans BinDetails
-const STATUS_META = {
-  EMPTY: { label: "Vide", classes: "bg-green-50 text-green-700 border-green-200" },
-  FULL: { label: "Plein", classes: "bg-red-50 text-red-700 border-red-200" },
-  OUT_OF_SERVICE: { label: "Hors service", classes: "bg-gray-100 text-gray-600 border-gray-200" },
-  ARCHIVED: { label: "Archivé", classes: "bg-amber-50 text-amber-700 border-amber-200" },
-};
+export default function GarbageBinListPage() {
+  const [archived, setArchived] = useState(false);
+  const list = useAsync(() => (archived ? garbagebins.getArchived() : garbagebins.getAll()), [archived], { initial: [] });
+  const [status, setStatus] = useState("ALL");
+  const [town, setTown] = useState("");
+  const [query, setQuery] = useState("");
+  const [selected, setSelected] = useState(null);
+  const [archiving, setArchiving] = useState(null);
+  const [pending, run] = useAction();
 
-export default function GarbageBinList() {
-  const { user } = useAuth();
-  const role = user?.role;
+  const towns = [...new Set(list.data.map((b) => b.town).filter(Boolean))].sort();
+  const rows = useMemo(() => list.data
+    .filter((b) => status === "ALL" || b.status === status)
+    .filter((b) => !town || b.town === town)
+    .filter((b) => includesText(`${b.code} ${b.quarter} ${b.town} ${b.description}`, query)),
+  [list.data, status, town, query]);
+  const count = (s) => list.data.filter((b) => b.status === s).length;
 
-  // États pour la gestion des données réelles
-  const [binList, setBinList] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const [search, setSearch] = useState("");
-  const [filterCity, setFilterCity] = useState("");
-
-  // État pour la modale de détails / édition
-  const [selectedBin, setSelectedBin] = useState(null);
-
-  // Récupération des bacs depuis le backend au chargement du composant
-  useEffect(() => {
-    const fetchBins = async () => {
-      setIsLoading(true);
-
-      const result = await garbagebins.getAll();
-
-      console.log("[Backend Response] Liste des bacs à ordures :", result);
-
-      if (result.success) {
-        setBinList(result.data || []);
-      } else {
-        notify.error(
-          result.error || "Impossible de charger les bacs à ordures",
-          result.technical
-        );
-      }
-      setIsLoading(false);
-    };
-
-    fetchBins();
-  }, []);
-
-  // Handler pour la suppression/archivage
-  const handleArchive = async (id, code) => {
-    if (confirm(`Voulez-vous vraiment supprimer le bac à ordures avec le code ${code} ?`)) {
-      const result = await garbagebins.archive(id);
-      if (result.success) {
-        setBinList((prev) => prev.filter((bin) => bin.id !== id));
-        notify.success("Bac archivé");
-      } else {
-        notify.error(
-          result.error || "Impossible de supprimer ce bac",
-          result.technical
-        );
-      }
-    }
-  };
-
-  // Callback appelé par BinDetails après une édition réussie : on synchronise la liste
-  const handleBinUpdated = (updatedBin) => {
-    setBinList((prev) => prev.map((bin) => (bin.id === updatedBin.id ? updatedBin : bin)));
-    setSelectedBin(updatedBin);
-  };
-
-  // Villes uniques calculées sur les données dynamiques
-  const cities = [...new Set(binList.map((b) => b.town).filter(Boolean))];
-
-  // Format date (FR)
-  const formatDate = (date) => {
-    if (!date) return "Date inconnue";
-    return new Date(date).toLocaleDateString("fr-FR", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  };
-
-  // Filtrage + Recherche appliqués sur les données dynamiques
-  const filteredBins = binList.filter((bin) => {
-    const matchesSearch = (bin.code || "").toLowerCase().includes(search.toLowerCase());
-    const matchesCity = filterCity === "" || bin.town === filterCity;
-    return matchesSearch && matchesCity;
+  const act = (fn, msg, after) => run(async () => {
+    const r = await fn();
+    if (r.success) {
+      notify.success(msg);
+      after?.(r.data);
+      list.reload({ silent: true });
+    } else notify.error(r.error);
   });
 
-  // ÉCRAN DE CHARGEMENT TECHNIQUE (Design inchangé)
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-32 space-y-4">
-        <Loader2 className="w-10 h-10 text-green-600 animate-spin" />
-        <p className="text-gray-500 font-medium">Chargement des bacs à ordures...</p>
+  const columns = [
+    { key: "code", header: "Bac", render: (b) => (
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-slate-100">
+          {b.photo ? <img src={b.photo} alt="" className="h-full w-full object-cover" /> : <Recycle size={18} className="m-2.5 text-slate-400" />}
+        </div>
+        <div><p className="font-semibold text-slate-800">{b.code}</p><p className="text-xs text-slate-500">{b.capacityLiters ? `${b.capacityLiters} L` : "Capacité non renseignée"}</p></div>
       </div>
-    );
-  }
+    ) },
+    { key: "place", header: "Emplacement", render: (b) => <div><p className="text-slate-700">{b.quarter || "—"}</p><p className="text-xs text-slate-400">{b.town}</p></div> },
+    { key: "emptied", header: "Dernier vidage", hideOnMobile: true, render: (b) => <span className="text-slate-500">{b.lastEmptiedAt ? timeAgo(b.lastEmptiedAt) : "—"}</span> },
+    { key: "status", header: "État", render: (b) => <StatusBadge map={BIN_STATUS} value={b.status} /> },
+    { key: "actions", header: "", className: "w-28", render: (b) => (
+      <RowActions>
+        {archived ? (
+          <IconButton icon={<RotateCcw size={16} />} label="Restaurer" tone="green" onClick={() => act(() => garbagebins.restore(b.id), `Bac ${b.code} restauré`)} />
+        ) : (
+          <>
+            <Link href={`/admin/addGarbageBin?id=${b.id}`} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" title="Modifier"><Pencil size={16} /></Link>
+            <IconButton icon={<Archive size={16} />} label="Archiver" tone="red" onClick={() => setArchiving(b)} />
+          </>
+        )}
+      </RowActions>
+    ) },
+  ];
 
   return (
-    <div className="p-8 space-y-6">
-      {/* SEARCH + FILTER */}
-      <div className="flex flex-wrap gap-4 items-center">
-        {/* SEARCH */}
-        <input
-          type="text"
-          placeholder="Rechercher par code..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="w-full sm:w-64 border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-        />
-
-        {/* FILTER */}
-        <div className="flex items-center gap-2 text-gray-600">
-          <Filter size={18} />
-          <span className="font-medium text-sm">Ville :</span>
+    <div>
+      <PageHeader
+        title="Bacs à ordures"
+        subtitle="Référentiel géolocalisé des bacs et de leur état."
+        actions={<Link href="/admin/addGarbageBin" className="btn-primary"><Plus size={16} /> Ajouter un bac</Link>}
+      />
+      {!archived && (
+        <div className="mb-6 grid gap-4 sm:grid-cols-3">
+          <StatCard icon={<Recycle size={20} />} label="Bacs actifs" value={list.data.length} loading={list.loading} tone="green" />
+          <StatCard icon={<Recycle size={20} />} label="Pleins à vider" value={count("FULL")} loading={list.loading} tone="red" />
+          <StatCard icon={<Recycle size={20} />} label="Hors service" value={count("OUT_OF_SERVICE")} loading={list.loading} tone="slate" />
         </div>
+      )}
+      <Card>
+        <div className="flex flex-col gap-3 border-b border-slate-100 p-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap items-center gap-3">
+            <FilterPills value={archived ? "ARCH" : status} onChange={(v) => { if (v === "ARCH") { setArchived(true); setStatus("ALL"); } else { setArchived(false); setStatus(v); } }} options={[
+              { value: "ALL", label: "Tous" },
+              { value: "FULL", label: "Pleins" },
+              { value: "EMPTY", label: "Vides" },
+              { value: "OUT_OF_SERVICE", label: "Hors service" },
+              { value: "ARCH", label: "Archivés" },
+            ]} />
+            {towns.length > 1 && <Select value={town} onChange={(e) => setTown(e.target.value)} placeholder="Toutes les villes" options={towns.map((t) => ({ value: t, label: t }))} className="w-44" />}
+          </div>
+          <SearchInput value={query} onChange={setQuery} placeholder="Code, quartier…" className="lg:w-64" />
+        </div>
+        <DataTable
+          columns={columns}
+          rows={rows}
+          loading={list.loading}
+          error={list.error}
+          onRetry={list.reload}
+          onRowClick={archived ? undefined : setSelected}
+          empty={<EmptyState icon={<Recycle size={26} />} title="Aucun bac" description="Ajoutez les bacs de votre zone de collecte avec leur position GPS." action={!archived && <Link href="/admin/addGarbageBin" className="btn-primary"><Plus size={16} /> Ajouter un bac</Link>} />}
+        />
+      </Card>
 
-        <select
-          value={filterCity}
-          onChange={(e) => setFilterCity(e.target.value)}
-          className="border rounded-lg px-4 py-2 bg-green-600 text-white text-sm cursor-pointer focus:outline-none focus:ring-2 focus:ring-green-500"
+      {selected && (
+        <Drawer
+          open
+          onClose={() => setSelected(null)}
+          title={`Bac ${selected.code}`}
+          subtitle={<StatusBadge map={BIN_STATUS} value={selected.status} />}
+          footer={
+            <>
+              <Link href={`/admin/addGarbageBin?id=${selected.id}`} className="btn-secondary"><Pencil size={15} /> Modifier</Link>
+              {selected.status === "FULL" && <Link href={`/admin/newMission?bin=${selected.id}`} className="btn-primary"><ClipboardPlus size={15} /> Créer une mission</Link>}
+            </>
+          }
         >
-          <option value="" className="bg-white text-black">
-            Toutes les villes
-          </option>
-
-          {cities.map((city) => (
-            <option key={city} value={city} className="bg-white text-black">
-              {city}
-            </option>
-          ))}
-        </select>
-
-        <div className="ml-auto flex items-center gap-3">
-          {/* ADD GARBAGE BIN */}
-          <Link
-            href="/admin/addGarbageBin"
-            className="flex items-center justify-center w-10 h-10 bg-green-600 text-white rounded-full shadow-md hover:bg-green-700 hover:scale-110 transition-all"
-            title="Ajouter un bac"
-          >
-            <Plus size={22} />
-          </Link>
-        </div>
-      </div>
-
-      {/* LIST / EMPTY STATE */}
-      {filteredBins.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-green-50/50 rounded-2xl border-2 border-dashed border-green-300 space-y-3">
-          <DeleteOutlinedIcon className="text-green-600" style={{ fontSize: 100 }} />
-          <p className="text-green-700 font-semibold text-lg">Aucun bac trouvé.</p>
-          <p className="text-green-600/70 text-sm">
-            Modifiez vos filtres ou ajoutez un nouveau bac pour commencer.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {filteredBins.map((bin) => {
-            const statusMeta = STATUS_META[bin.status];
-            return (
-              <div
-                key={bin.id}
-                className="group relative flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md hover:border-green-200 transition-all duration-200"
-              >
-                {/* IMAGE */}
-                <div className="w-32 h-32 sm:w-36 sm:h-36 shrink-0 self-center ml-4 my-4 rounded-xl overflow-hidden bg-gray-50 border border-gray-100">
-                  {bin.photo ? (
-                    <img
-                      src={bin.photo}
-                      alt={`Bac ${bin.code}`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-gray-300">
-                      <ImageOutlinedIcon style={{ fontSize: 32 }} />
-                      <span className="text-[11px] font-medium text-gray-400">
-                        Pas de photo
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* INFO */}
-                <div className="flex flex-col justify-center gap-2.5 p-6 flex-1 min-w-0">
-                  {/* CODE + STATUT */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 font-mono text-sm font-semibold px-2.5 py-1 rounded-md border border-green-100">
-                      <Trash2 size={14} />
-                      {bin.code}
-                    </span>
-                    {statusMeta && (
-                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold border ${statusMeta.classes}`}>
-                        {statusMeta.label}
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Location badges */}
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
-                    <span className="inline-flex items-center gap-1">
-                      <MapPin size={14} className="text-gray-400" />
-                      {bin.town || "Ville inconnue"}
-                      {bin.quarter ? `, ${bin.quarter}` : ""}
-                    </span>
-                  </div>
-
-                  {/* Description */}
-                  <div className="flex items-start gap-1.5 text-sm text-gray-500">
-                    <FileText size={14} className="text-gray-300 mt-0.5 shrink-0" />
-                    {bin.description ? (
-                      <p className="line-clamp-2">{bin.description}</p>
-                    ) : (
-                      <p className="italic text-gray-400">Aucune description renseignée.</p>
-                    )}
-                  </div>
-
-                  {/* Date */}
-                  <p className="text-xs text-gray-400 pt-1">
-                    Créé le {formatDate(bin.createdAt)}
-                  </p>
-                </div>
-
-                {/* ACTIONS */}
-                <div className="flex items-start gap-2 p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                  {/* VOIR DÉTAILS — accessible à tous les rôles */}
-                  <button
-                    onClick={() => setSelectedBin(bin)}
-                    title="Voir les détails"
-                    className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition"
-                  >
-                    <VisibilityIcon fontSize="small" />
-                  </button>
-
-                  {/* SUPPRIMER — réservé au SUPER_ADMIN */}
-                  {role === "SUPER_ADMIN" && (
-                    <button
-                      onClick={() => handleArchive(bin.id, bin.code)}
-                      title="Supprimer"
-                      className="w-9 h-9 flex items-center justify-center rounded-full bg-gray-100 hover:bg-red-100 text-gray-400 hover:text-red-600 transition"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+          {selected.photo && <img src={selected.photo} alt="" className="mb-4 h-48 w-full rounded-2xl object-cover" />}
+          {selected.latitude != null && (
+            <div className="mb-4 h-48 overflow-hidden rounded-2xl border border-slate-200">
+              <LeafletMap markers={[{ id: selected.id, position: [selected.latitude, selected.longitude], kind: "bin", color: selected.status === "FULL" ? "red" : "green" }]} zoom={16} />
+            </div>
+          )}
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Changer l'état</p>
+          <div className="mb-5 grid grid-cols-3 gap-2">
+            {["EMPTY", "FULL", "OUT_OF_SERVICE"].map((s) => (
+              <button key={s} disabled={pending || selected.status === s} onClick={() => act(() => garbagebins.setStatus(selected.id, s), "État mis à jour", setSelected)}
+                className={`rounded-xl border px-2 py-2 text-xs font-semibold transition ${selected.status === s ? "border-brand-500 bg-brand-50 text-brand-800" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}>
+                {BIN_STATUS[s].label}
+              </button>
+            ))}
+          </div>
+          <DetailRow label="Quartier">{selected.quarter}</DetailRow>
+          <DetailRow label="Ville">{selected.town}</DetailRow>
+          <DetailRow label="Capacité">{selected.capacityLiters ? `${selected.capacityLiters} L` : "—"}</DetailRow>
+          <DetailRow label="Repère">{selected.description}</DetailRow>
+          <DetailRow label="Dernier passage à plein">{formatDateTime(selected.lastFullAt)}</DetailRow>
+          <DetailRow label="Dernier vidage">{formatDateTime(selected.lastEmptiedAt)}</DetailRow>
+          <DetailRow label="Coordonnées">{selected.latitude?.toFixed(5)}, {selected.longitude?.toFixed(5)}</DetailRow>
+          <DetailRow label="Ajouté le">{formatDateTime(selected.createdAt)}</DetailRow>
+        </Drawer>
       )}
 
-      {/* MODALE DE DÉTAILS / ÉDITION */}
-      {selectedBin && (
-        <BinDetails
-          bin={selectedBin}
-          onClose={() => setSelectedBin(null)}
-          onUpdated={handleBinUpdated}
-        />
-      )}
+      <ConfirmDialog
+        open={!!archiving}
+        onClose={() => setArchiving(null)}
+        pending={pending}
+        danger
+        title="Archiver ce bac ?"
+        message={`Le bac ${archiving?.code} sera retiré de la carte et ne pourra plus être ciblé par une mission. Vous pourrez le restaurer depuis l'onglet « Archivés ».`}
+        confirmLabel="Archiver"
+        onConfirm={() => act(() => garbagebins.archive(archiving.id), "Bac archivé", () => setArchiving(null))}
+      />
     </div>
   );
 }

@@ -1,71 +1,10 @@
-import { apiClient, fail } from "./api";
+import { get, post, put } from "./api";
 
 export const missions = {
-  getAll: async () => {
-    try {
-      const response = await apiClient.get("/mission");
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "missions.getAll",
-        error,
-        "Impossible de charger la liste des missions."
-      );
-    }
-  },
-
-  getCount: async () => {
-    try {
-      const response = await apiClient.get("/mission/count");
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "missions.getCount",
-        error,
-        "Impossible de récupérer le nombre de missions."
-      );
-    }
-  },
-
-  create: async (missionData) => {
-    try {
-      const response = await apiClient.post("/mission", missionData);
-      console.info("[missions.create] success", response.data);
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "missions.create",
-        error,
-        "Impossible de créer cette mission. Réessayez plus tard."
-      );
-    }
-  },
-
-  update: async (id, missionData) => {
-    try {
-      const response = await apiClient.put(`/mission/${id}`, missionData);
-      console.info("[missions.update] success", { id });
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "missions.update",
-        error,
-        "Impossible de modifier cette mission. Réessayez plus tard."
-      );
-    }
-  },
-
-  archive: async (id) => {
-    try {
-      const response = await apiClient.put(`/mission/${id}/archive`);
-      console.info("[missions.archive] success", { id });
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "missions.archive",
-        error,
-        "Impossible de retirer cette mission. Réessayez plus tard."
-      );
-    }
-  },
+  getAll: (params = {}) => get("/mission", { params, error: "Impossible de charger la liste des missions." }),
+  getCount: () => get("/mission/count", { error: "Impossible de récupérer le nombre de missions." }),
+  getById: (id) => get(`/mission/${id}`, { error: "Impossible de charger cette mission." }),
+  create: (data) => post("/mission", data, { error: "Impossible de créer cette mission. Réessayez plus tard." }),
+  update: (id, data) => put(`/mission/${id}`, data, { error: "Impossible de modifier cette mission." }),
+  cancel: (id, reason) => put(`/mission/${id}/cancel`, { reason }, { error: "Impossible d'annuler cette mission." }),
 };

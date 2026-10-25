@@ -99,6 +99,19 @@ export const auth = {
     }
   },
 
+  deleteAccount: async (password) => {
+    try {
+      await apiClient.post("/auth/delete-account", { password });
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("token");
+        localStorage.removeItem("user");
+      }
+      return { success: true };
+    } catch (error) {
+      return fail("auth.deleteAccount", error, "Impossible de supprimer votre compte pour le moment.");
+    }
+  },
+
   heartbeat: async () => {
     try {
       await apiClient.post("/auth/heartbeat");

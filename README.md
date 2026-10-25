@@ -1,36 +1,27 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WasteTracker — Application Web
 
-## Getting Started
+Application Next.js de la plateforme WasteTracker (YDOL Ingénierie) : **vue administrative** (tour de contrôle) et **vue client** (population et entreprises). Les chauffeurs utilisent l'application mobile dédiée.
 
-First, run the development server:
+## Démarrage
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev          # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+L'URL de l'API se règle dans `.env` : `NEXT_PUBLIC_API_URL=http://localhost:8080/api` (valeur intégrée au moment du build).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Organisation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Dossier | Contenu |
+|---------|---------|
+| `src/app/(auth)` | Connexion, inscription, mot de passe oublié / réinitialisation |
+| `src/app/(view)/admin` | Tour de contrôle : tableau de bord, carte, missions, signalements, parc, clients, premium, sensibilisation, boutique |
+| `src/app/(view)/client` | Espace client : accueil, sensibilisation, signaler, bacs proches, boutique, commandes, premium |
+| `src/components/ui` | Kit d'interface (boutons, badges, tableaux, modales, champs, graphiques) |
+| `src/components/map` | Cartes Leaflet (chargées côté client uniquement) |
+| `src/components/shell` | Mises en page admin, client et authentification |
+| `src/services` | Un module par ressource de l'API ; chaque appel renvoie `{ success, data }` ou `{ success: false, error }` |
+| `src/lib` | Formatage (FCFA, dates), libellés des statuts, compression d'image |
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+L'accès aux espaces est filtré par rôle (`SessionProvider`) ; les droits réels sont contrôlés par le serveur.

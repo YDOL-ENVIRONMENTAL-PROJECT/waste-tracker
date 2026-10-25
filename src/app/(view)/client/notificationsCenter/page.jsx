@@ -1,8 +1,5 @@
-// Page centre de notifications
-import NotificationCenter from "@/app/(view)/NotificationCenter";
+import NotificationCenter from "@/components/shared/NotificationCenter";
 
-export default function ClientNotificationCenter() {
-  return (
-    <NotificationCenter/>
-  );
+export default function ClientNotificationsPage() {
+  return <NotificationCenter />;
 }

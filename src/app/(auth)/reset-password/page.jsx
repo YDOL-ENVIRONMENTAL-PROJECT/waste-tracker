@@ -1,115 +1,47 @@
 "use client";
 
 import { Suspense, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import AuthLayout from "@/components/shell/AuthLayout";
+import { PasswordInput, passwordError } from "@/components/ui/Field";
+import Spinner from "@/components/ui/Spinner";
 import { auth } from "@/services/auth";
 import { notify } from "@/lib/notify";
 
-function ResetPasswordContent() {
+function ResetForm() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const token = searchParams.get("token");
+  const token = useSearchParams().get("token");
+  const [form, setForm] = useState({ password: "", confirm: "" });
+  const [loading, setLoading] = useState(false);
+  const err = passwordError(form.password);
 
-  const [formData, setFormData] = useState({
-    password: "",
-    confirmPassword: "",
-  });
-
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const validateForm = () => {
-    if (formData.password !== formData.confirmPassword) {
-      notify.error("Les mots de passe ne correspondent pas");
-      return false;
-    }
-    if (formData.password.length < 6) {
-      notify.warning("Le mot de passe doit contenir au moins 6 caractères");
-      return false;
-    }
-    return true;
-  };
-
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-
-    if (!token) {
-      notify.error("Lien invalide. Demandez un nouveau lien.");
-      return;
-    }
-
-    if (!validateForm()) return;
-
-    setIsLoading(true);
-
-    const result = await auth.resetPassword(
-      token,
-      formData.password,
-      formData.confirmPassword
-    );
-
-    if (result.success) {
-      notify.success("Mot de passe réinitialisé");
-      setTimeout(() => router.push("/connexion"), 2000);
-    } else {
-      notify.error(
-        result.error || "Impossible de réinitialiser le mot de passe",
-        result.technical
-      );
-    }
-
-    setIsLoading(false);
+    if (err) return notify.warning(err);
+    if (form.password !== form.confirm) return notify.warning("Les mots de passe ne correspondent pas");
+    setLoading(true);
+    const r = await auth.resetPassword(token, form.password, form.confirm);
+    setLoading(false);
+    if (r.success) { notify.success("Mot de passe modifié, vous pouvez vous connecter"); router.push("/connexion"); } else notify.error(r.error, r.technical);
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-green-50">
-      {/* ton UI inchangé */}
-      <div className="flex items-center justify-center p-8">
-        <div className="w-full max-w-sm">
-          <Link href="/connexion" className="text-green-600 mb-6 inline-block">
-            ← Retour
-          </Link>
-
-          <div className="bg-white p-8 rounded-xl shadow-lg">
-            <h1 className="text-2xl font-bold text-green-600 mb-2">
-              Réinitialiser
-            </h1>
-
-            <form onSubmit={handleSubmit}>
-              <input
-                type="password"
-                name="password"
-                placeholder="Nouveau mot de passe"
-                value={formData.password}
-                onChange={handleChange}
-              />
-              <input
-                type="password"
-                name="confirmPassword"
-                placeholder="Confirmer"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-              />
-              <button disabled={!token || isLoading}>
-                Reset
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
-    </div>
+    <AuthLayout title="Nouveau mot de passe" subtitle="Choisissez un mot de passe que vous n'utilisez nulle part ailleurs."
+      footer={<Link href="/connexion" className="font-semibold text-brand-700 hover:underline">Retour à la connexion</Link>}>
+      {!token ? (
+        <p className="rounded-2xl bg-red-50 p-5 text-sm text-red-700">Ce lien est incomplet. <Link href="/forgot-password" className="font-semibold underline">Demandez un nouveau lien</Link>.</p>
+      ) : (
+        <form onSubmit={submit} className="space-y-4">
+          <PasswordInput label="Nouveau mot de passe" required value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} error={form.password && err} hint="8 caractères minimum, avec une lettre et un chiffre" />
+          <PasswordInput label="Confirmation" required value={form.confirm} onChange={(e) => setForm({ ...form, confirm: e.target.value })} error={form.confirm && form.confirm !== form.password ? "Ne correspond pas" : null} />
+          <button className="btn-primary w-full py-3" disabled={loading}>{loading && <Spinner />} Réinitialiser</button>
+        </form>
+      )}
+    </AuthLayout>
   );
 }
 
-export default function Page() {
-  return (
-    <Suspense fallback={<div>Chargement...</div>}>
-      <ResetPasswordContent />
-    </Suspense>
-  );
+export default function ResetPasswordPage() {
+  return <Suspense fallback={null}><ResetForm /></Suspense>;
 }

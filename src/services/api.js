@@ -8,6 +8,7 @@ export const apiClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  timeout: 30000,
 });
 
 apiClient.interceptors.request.use(
@@ -38,7 +39,8 @@ apiClient.interceptors.response.use(
         logTechnical("session.expired", error);
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        window.location.href = "/connexion";
+        const redirect = encodeURIComponent(window.location.pathname);
+        window.location.href = `/connexion?expired=1&redirect=${redirect}`;
       }
       return Promise.reject(error);
     }
@@ -61,8 +63,10 @@ export function getTechnicalError(error) {
 }
 
 /**
- * Prefer a clear user message. Never expose backend/technical text to the UI.
- * Logs the full technical payload to the console.
+ * Le serveur renvoie des messages métier rédigés pour l'utilisateur sur les erreurs
+ * 400 / 403 / 404 / 409 (ex. « Stock insuffisant… ») : on les affiche tels quels.
+ * Pour les autres erreurs (réseau, 500), on garde le message générique fourni.
+ * Le détail technique est toujours journalisé dans la console.
  */
 export function fail(context, error, userMessage) {
   let sanitizedError = error;
@@ -70,12 +74,35 @@ export function fail(context, error, userMessage) {
     sanitizedError = new Error(`Échec de la requête détecté dans le contexte : ${context} (Erreur d'origine vide ou inconnue)`);
   }
   logTechnical(context, sanitizedError);
+  const status = error?.response?.status;
+  const serverMessage = error?.response?.data?.message;
+  const businessError = [400, 403, 404, 409].includes(status) && serverMessage;
+  let message = businessError ? serverMessage : userMessage || "Une erreur réseau ou serveur est survenue.";
+  if (!error?.response && error?.code !== "ERR_CANCELED") {
+    message = "Impossible de joindre le serveur. Vérifiez votre connexion internet.";
+  }
   return {
     success: false,
-    error: userMessage || "Une erreur réseau ou serveur est survenue.",
+    status,
+    error: message,
     technical: getTechnicalError(error),
   };
 }
+
+/** Appel générique renvoyant { success, data } ou { success: false, error }. */
+export async function request(method, url, { data, params, error } = {}) {
+  try {
+    const response = await apiClient.request({ method, url, data, params });
+    return { success: true, data: response.data, status: response.status };
+  } catch (e) {
+    return fail(`${method.toUpperCase()} ${url}`, e, error);
+  }
+}
+
+export const get = (url, opts) => request("get", url, opts);
+export const post = (url, data, opts) => request("post", url, { ...opts, data });
+export const put = (url, data, opts) => request("put", url, { ...opts, data });
+export const del = (url, opts) => request("delete", url, opts);
 
 /** @deprecated Prefer fail() — kept for gradual migration */
 export const getErrorMessage = (error, defaultMessage = "Une erreur est survenue") => {

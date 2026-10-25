@@ -1,281 +1,63 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import SuccessModal from "@/components/layout/Modals/Success";
-import ConfirmationModal from "@/components/layout/Modals/Confirmation";
-import { admins } from "@/services/admin";
+import { ArrowLeft, ShieldCheck, ShieldPlus } from "lucide-react";
+import PageHeader from "@/components/ui/PageHeader";
+import { Card, CardHeader } from "@/components/ui/Card";
+import { ChoiceCards, Input, PasswordInput, passwordError } from "@/components/ui/Field";
+import Spinner from "@/components/ui/Spinner";
+import { useSession } from "@/components/providers/SessionProvider";
+import { admins as adminService } from "@/services/admin";
 import { notify } from "@/lib/notify";
 
-export default function AddAdmin() {
-
+export default function AddAdminPage() {
   const router = useRouter();
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [generatedPassword, setGeneratedPassword] = useState("");
+  const { user } = useSession();
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", site: "", role: "ADMIN", password: "" });
+  const [saving, setSaving] = useState(false);
+  const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+  const pwdError = passwordError(form.password);
 
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    phone: "",
-    email: "",
-    site: "",
-    role: "ADMIN",
-  });
+  if (user?.role !== "SUPER_ADMIN") {
+    return <Card className="p-8 text-center text-sm text-slate-600">Cette page est réservée au super administrateur.</Card>;
+  }
 
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const handleSubmit = (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-
-    setShowConfirmation(true);
-  };
-
-  const handleConfirm = async () => {
-    setShowConfirmation(false);
-    setIsSubmitting(true);
-
-    const tempPassword = Math.random().toString(36).slice(2, 10);
-    try {
-      const payload = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone,
-        email: formData.email,
-        site: formData.site,
-        role: formData.role,
-        profilePicture: null,
-        status: "OFFLINE",
-        password: tempPassword,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-
-      const result = await admins.create(payload);
-
-      if (result.success) {
-        console.log("Admin created :", result.data);
-
-        setGeneratedPassword(tempPassword);
-        setShowSuccess(true);
-      } else {
-        notify.error(
-          result.error || "Impossible de créer l'administrateur",
-          result.technical
-        );
-      }  
-    } catch (error) {
-      notify.error("Impossible de créer l'administrateur", error);
-    } finally {
-      setIsSubmitting(false);
-    }
+    if (pwdError) return notify.warning(pwdError);
+    setSaving(true);
+    const r = await adminService.create(form);
+    setSaving(false);
+    if (r.success) { notify.success("Administrateur ajouté"); router.push("/admin/adminList"); } else notify.error(r.error);
   };
 
   return (
-
-    <div className="bg-green-50 flex justify-center p-4 sm:p-6 md:p-10">
-
-      <div className="w-full max-w-3xl bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sm:p-10">
-
-        {/* TITLE */}
-        <h1 className="text-2xl font-bold text-gray-800 mb-8">
-          Créer un nouvel administrateur
-        </h1>
-
-
-        {/* FORM */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-            {/* NOM */}
-            <div className="flex flex-col gap-1">
-
-              <label className="text-sm text-gray-600">
-                Nom
-              </label>
-
-              <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
-                className="border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"
-              />
-
-            </div>
-
-
-            {/* PRENOM */}
-            <div className="flex flex-col gap-1">
-
-              <label className="text-sm text-gray-600">
-                Prénom
-              </label>
-
-              <input
-                type="text"
-                name="firstName"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
-                className="border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"
-              />
-
-            </div>
-
-
-            {/* TEL */}
-            <div className="flex flex-col gap-1">
-
-              <label className="text-sm text-gray-600">
-                Téléphone
-              </label>
-
-              <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
-                onChange={handleChange}
-                required
-                className="border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"
-              />
-
-            </div>
-
-
-            {/* EMAIL */}
-            <div className="flex flex-col gap-1">
-
-              <label className="text-sm text-gray-600">
-                Email
-              </label>
-
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                required
-                className="border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"
-              />
-
-            </div>
-
-
-            {/* SITE */}
-            <div className="flex flex-col gap-1">
-
-              <label className="text-sm text-gray-600">
-                Site
-              </label>
-
-              <input
-                type="text"
-                name="site"
-                value={formData.site}
-                onChange={handleChange}
-                required
-                className="border border-gray-200 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 outline-none"
-              />
-
-            </div>
-
-            {/* ROLE */}
-            <div className="flex flex-col gap-1">
-
-              <label className="text-sm text-gray-600">
-                Rôle
-              </label>
-
-              <select
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-                className="border border-gray-200 bg-gray-100 rounded-lg px-3 py-2 focus:ring-2 focus:ring-gray-100 outline-none"
-              >
-
-                <option value="ADMIN">
-                  ADMIN
-                </option>
-
-                <option value="SUPER_ADMIN">
-                  SUPER_ADMIN
-                </option>
-
-              </select>
-
-            </div>
-
+    <form onSubmit={submit} className="mx-auto max-w-3xl">
+      <PageHeader title="Ajouter un administrateur" actions={<Link href="/admin/adminList" className="btn-ghost"><ArrowLeft size={16} /> Retour</Link>} />
+      <Card>
+        <CardHeader title="Identité et accès" />
+        <div className="grid gap-4 px-5 pb-5 sm:grid-cols-2">
+          <Input label="Prénom" required value={form.firstName} onChange={(e) => set({ firstName: e.target.value })} />
+          <Input label="Nom" required value={form.lastName} onChange={(e) => set({ lastName: e.target.value })} />
+          <Input label="E-mail" type="email" required value={form.email} onChange={(e) => set({ email: e.target.value })} />
+          <Input label="Téléphone" value={form.phone} onChange={(e) => set({ phone: e.target.value })} />
+          <Input className="sm:col-span-2" label="Site" value={form.site} onChange={(e) => set({ site: e.target.value })} placeholder="Ex. Yaoundé" />
+          <div className="sm:col-span-2">
+            <p className="label">Rôle</p>
+            <ChoiceCards columns={2} value={form.role} onChange={(role) => set({ role })} options={[
+              { value: "ADMIN", label: "Administrateur", description: "Pilote les opérations de collecte", icon: <ShieldCheck size={16} /> },
+              { value: "SUPER_ADMIN", label: "Super administrateur", description: "Gère aussi les administrateurs", icon: <ShieldPlus size={16} /> },
+            ]} />
           </div>
-
-
-          {/* BUTTONS */}
-          <div className="flex justify-end gap-4 pt-6">
-
-            <button
-              type="button"
-              onClick={() => router.push("/admin/adminList")}
-              className="px-6 py-2 border border-gray-200 rounded-lg hover:bg-red-500 hover:text-white transition"
-            >
-              Annuler
-            </button>
-
-            <button
-              type="submit"
-              className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-            >
-              Enregistrer
-            </button>
-
-          </div>
-
-        </form>
-
+          <PasswordInput className="sm:col-span-2" label="Mot de passe provisoire" required value={form.password} onChange={(e) => set({ password: e.target.value })} error={form.password && pwdError} hint="Au moins 8 caractères, dont une lettre et un chiffre" />
+        </div>
+      </Card>
+      <div className="mt-6 flex justify-end gap-2">
+        <Link href="/admin/adminList" className="btn-secondary">Annuler</Link>
+        <button className="btn-primary" disabled={saving}>{saving && <Spinner />} Créer le compte</button>
       </div>
-
-      {/* MODALS */}
-      {showConfirmation && (
-        <ConfirmationModal
-          message="Êtes-vous sûr de vouloir créer cet administrateur ?"
-          onConfirm={handleConfirm}
-          onCancel={() => setShowConfirmation(false)}
-        />
-      )}
-
-      {showSuccess && (
-        <SuccessModal
-          message={
-            <div className="space-y-4">
-              <p>L'administrateur a été créé avec succès !</p>
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
-                <span className="block text-xs text-gray-500 uppercase tracking-wider font-semibold mb-1">
-                  Mot de passe généré par défaut
-                </span>
-                <span className="text-lg font-mono font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded select-all border border-emerald-100">
-                  {generatedPassword}
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 italic">
-                Pensez à copier ce mot de passe pour le transmettre au nouvel administrateur.
-              </p>
-            </div>
-          }
-          onClose={() => {
-            setShowSuccess(false);
-            router.push("/admin/adminList");
-          }}
-        />
-      )}
-
-    </div>
-
+    </form>
   );
 }
