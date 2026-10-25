@@ -61,7 +61,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthLayout wide title="Créer un compte" subtitle={`Étape ${step} sur 2 — ${step === 1 ? "qui êtes-vous ?" : "vos coordonnées"}`}
+    <AuthLayout wide image="/assets/create-account-image.png" imagePosition="70% center" title="Créer un compte" subtitle={`Étape ${step} sur 2 — ${step === 1 ? "qui êtes-vous ?" : "vos coordonnées"}`}
       footer={<>Déjà inscrit ? <Link href="/connexion" className="font-semibold text-brand-700 hover:underline">Se connecter</Link></>}>
       <div className="mb-6 flex gap-2">{[1, 2].map((s) => <div key={s} className={`h-1.5 flex-1 rounded-full ${s <= step ? "bg-brand-600" : "bg-slate-200"}`} />)}</div>
       {step === 1 ? (

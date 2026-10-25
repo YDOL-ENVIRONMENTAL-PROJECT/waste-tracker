@@ -2,8 +2,8 @@ import Link from "next/link";
 import { ArrowLeft, Megaphone, Sparkles, Truck } from "lucide-react";
 import Brand from "./Brand";
 
-/** Mise en page des écrans d'authentification : formulaire à gauche, panneau de marque à droite. */
-export default function AuthLayout({ title, subtitle, children, footer, wide = false }) {
+/** Mise en page des écrans d'authentification : formulaire à gauche, photo et messages clés à droite. */
+export default function AuthLayout({ title, subtitle, children, footer, wide = false, image = "/assets/login-image.jpeg", imagePosition = "center" }) {
   return (
     <div className="grid min-h-screen lg:grid-cols-[1fr_0.9fr]">
       <div className="flex flex-col px-5 py-6 sm:px-10">
@@ -21,15 +21,15 @@ export default function AuthLayout({ title, subtitle, children, footer, wide = f
         </div>
         <p className="text-center text-xs text-slate-400">© {new Date().getFullYear()} YDOL Ingénierie · WasteTracker</p>
       </div>
-      <div className="relative hidden overflow-hidden bg-gradient-to-br from-brand-700 via-brand-800 to-brand-950 lg:flex lg:flex-col lg:justify-between lg:p-12">
-        <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-brand-400/20 blur-3xl" />
-        <div className="absolute -bottom-32 -left-16 h-96 w-96 rounded-full bg-emerald-300/10 blur-3xl" />
+      <div className="relative hidden overflow-hidden bg-brand-950 lg:flex lg:flex-col lg:justify-between lg:p-12">
+        <img src={image} alt="" className="absolute inset-0 h-full w-full object-cover" style={{ objectPosition: imagePosition }} />
+        <div className="absolute inset-0 bg-gradient-to-b from-brand-950/85 via-brand-900/25 to-brand-950/90" />
         <div className="relative">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-300">Gestion intelligente des déchets</p>
           <h2 className="mt-4 max-w-md text-4xl font-bold leading-tight text-white">Une ville plus propre, un signalement à la fois.</h2>
         </div>
         <div className="relative space-y-3">
-          {[[Megaphone, "Signalez un bac plein en 10 secondes", "Photo et position GPS, la tour de contrôle est prévenue."],
+          {[[Megaphone, "Signalez un bac plein en 10 secondes", "Photo et position GPS : l'équipe de collecte est prévenue."],
             [Truck, "Des collectes plus rapides", "Le camion disponible le plus proche est envoyé."],
             [Sparkles, "Le geste du jour", "Une capsule courte pour adopter les bons réflexes."]].map(([Icon, t, d]) => (
             <div key={t} className="flex gap-4 rounded-2xl bg-white/10 p-4 backdrop-blur-sm">
