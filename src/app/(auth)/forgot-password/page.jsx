@@ -2,114 +2,42 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { MailCheck, Mail } from "lucide-react";
+import AuthLayout from "@/components/shell/AuthLayout";
+import { Input } from "@/components/ui/Field";
+import Spinner from "@/components/ui/Spinner";
 import { auth } from "@/services/auth";
 import { notify } from "@/lib/notify";
 
-export default function ForgotPassword() {
+export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
-
-    const result = await auth.forgotPassword(email);
-
-    if (result.success) {
-      notify.success("Un email de réinitialisation a été envoyé. Vérifiez votre boîte de réception.");
-      setEmail("");
-    } else {
-      notify.error(
-        result.error || "Impossible d'envoyer le lien",
-        result.technical
-      );
-    }
-
-    setIsLoading(false);
+    setLoading(true);
+    const r = await auth.forgotPassword(email.trim());
+    setLoading(false);
+    if (r.success) setSent(true);
+    else notify.error(r.error, r.technical);
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-green-50">
-      {/* SECTION FORMULAIRE */}
-      <div className="flex items-center justify-center p-4 sm:p-8">
-        <div className="w-full max-w-sm">
-          <Link
-            href="/connexion"
-            className="text-green-600 font-medium mb-6 inline-block hover:underline"
-          >
-            ← Retour à la connexion
-          </Link>
-
-          <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8">
-            <h1 className="text-2xl font-bold text-green-600 mb-2">
-              Mot de passe oublié
-            </h1>
-
-            <p className="text-gray-500 mb-6">
-              Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
-            </p>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <input
-                type="email"
-                placeholder="Votre email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="input-style"
-                required
-                disabled={isLoading}
-              />
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {isLoading ? "Envoi en cours..." : "Envoyer le lien"}
-              </button>
-            </form>
-
-            <p className="text-center text-gray-500 mt-6">
-              Vous vous souvenez de votre mot de passe ?
-              <Link
-                href="/connexion"
-                className="text-green-600 ml-2 font-semibold hover:underline"
-              >
-                Se connecter
-              </Link>
-            </p>
-          </div>
+    <AuthLayout title="Mot de passe oublié" subtitle="Recevez un lien de réinitialisation par e-mail."
+      footer={<Link href="/connexion" className="font-semibold text-brand-700 hover:underline">Retour à la connexion</Link>}>
+      {sent ? (
+        <div className="rounded-2xl bg-brand-50 p-6 text-center">
+          <MailCheck size={32} className="mx-auto text-brand-700" />
+          <p className="mt-3 font-semibold text-slate-900">Vérifiez votre boîte mail</p>
+          <p className="mt-1 text-sm text-slate-600">Si un compte existe pour <b>{email}</b>, un lien valable 1 heure vient de vous être envoyé.</p>
         </div>
-      </div>
-
-      {/* SECTION IMAGE */}
-      <div className="hidden lg:flex items-center justify-center bg-green-600 p-12">
-        <div className="text-center">
-          <div className="mb-8">
-            <svg
-              className="w-24 h-24 mx-auto text-white opacity-80"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
-            </svg>
-          </div>
-
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Récupérez votre accès
-          </h2>
-
-          <p className="text-gray-200 max-w-md">
-            Nous vous aiderons à réinitialiser votre mot de passe en quelques étapes simples.
-          </p>
-        </div>
-      </div>
-    </div>
+      ) : (
+        <form onSubmit={submit} className="space-y-4">
+          <Input label="Adresse e-mail" type="email" required icon={<Mail size={16} />} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vous@exemple.cm" />
+          <button className="btn-primary w-full py-3" disabled={loading}>{loading && <Spinner />} Envoyer le lien</button>
+        </form>
+      )}
+    </AuthLayout>
   );
 }

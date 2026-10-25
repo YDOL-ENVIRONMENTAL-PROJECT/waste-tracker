@@ -1,71 +1,16 @@
-import { apiClient, fail } from "./api";
+import { get, post, put } from "./api";
 
 export const garbagebins = {
-  getAll: async () => {
-    try {
-      const response = await apiClient.get("/bin");
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "garbagebins.getAll",
-        error,
-        "Impossible de charger la liste des bacs."
-      );
-    }
-  },
-
-  getCount: async () => {
-    try {
-      const response = await apiClient.get("/bin/count");
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "garbagebins.getCount",
-        error,
-        "Impossible de récupérer le nombre de bacs."
-      );
-    }
-  },
-
-  create: async (binData) => {
-    try {
-      const response = await apiClient.post("/bin", binData);
-      console.info("[garbagebins.create] success", response.data);
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "garbagebins.create",
-        error,
-        "Impossible d'ajouter ce bac. Réessayez plus tard."
-      );
-    }
-  },
-
-  update: async (id, binData) => {
-    try {
-      const response = await apiClient.put(`/bin/${id}`, binData);
-      console.info("[garbagebins.update] success", { id });
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "garbagebins.update",
-        error,
-        "Impossible de modifier ce bac. Réessayez plus tard."
-      );
-    }
-  },
-
-  archive: async (id) => {
-    try {
-      const response = await apiClient.put(`/bin/${id}/archive`);
-      console.info("[garbagebins.archive] success", { id });
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "garbagebins.archive",
-        error,
-        "Impossible de retirer ce bac. Réessayez plus tard."
-      );
-    }
-  },
+  getAll: () => get("/bin", { error: "Impossible de charger la liste des bacs." }),
+  getArchived: () => get("/bin/archived", { error: "Impossible de charger les bacs archivés." }),
+  getCount: () => get("/bin/count", { error: "Impossible de récupérer le nombre de bacs." }),
+  getById: (id) => get(`/bin/${id}`, { error: "Impossible de charger ce bac." }),
+  nearby: (lat, lon, radius = 1500) =>
+    get("/bin/nearby", { params: { lat, lon, radius }, error: "Impossible de trouver les bacs à proximité." }),
+  create: (data) => post("/bin", data, { error: "Impossible d'ajouter ce bac. Réessayez plus tard." }),
+  update: (id, data) => put(`/bin/${id}`, data, { error: "Impossible de modifier ce bac." }),
+  setStatus: (id, status) =>
+    put(`/bin/${id}/status`, null, { params: { status }, error: "Impossible de changer le statut du bac." }),
+  archive: (id) => put(`/bin/${id}/archive`, null, { error: "Impossible de retirer ce bac." }),
+  restore: (id) => put(`/bin/${id}/restore`, null, { error: "Impossible de restaurer ce bac." }),
 };

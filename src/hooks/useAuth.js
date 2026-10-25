@@ -96,6 +96,17 @@ export function useAuth() {
     return result;
   };
 
+  /** Met à jour l'utilisateur en mémoire et dans le stockage local (après modification du profil). */
+  const updateUser = (patch) => {
+    setUser((prev) => {
+      const next = { ...prev, ...patch };
+      if (typeof window !== "undefined") {
+        localStorage.setItem("user", JSON.stringify(next));
+      }
+      return next;
+    });
+  };
+
   return {
     user,
     isLoading,
@@ -103,6 +114,7 @@ export function useAuth() {
     login,
     logout,
     register,
+    setUser: updateUser,
   };
 }
 

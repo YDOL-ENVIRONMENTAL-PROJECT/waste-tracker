@@ -1,218 +1,97 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Filter, Loader2 } from "lucide-react";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
-import LocalShippingIcon from "@mui/icons-material/LocalShipping"; // Importation de l'icône voiture MUI
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { vehicles } from "@/services/vehicle";
+import { Archive, Building2, Gauge, Pencil, Plus, Truck, UserRound } from "lucide-react";
+import PageHeader from "@/components/ui/PageHeader";
+import { Card } from "@/components/ui/Card";
+import { StatusBadge } from "@/components/ui/Badge";
+import { FilterPills, SearchInput } from "@/components/ui/Table";
+import EmptyState, { ErrorState } from "@/components/ui/EmptyState";
+import { CardsSkeleton } from "@/components/ui/Skeleton";
+import { ConfirmDialog } from "@/components/ui/Modal";
+import { useAction, useAsync } from "@/hooks/useAsync";
+import { vehicles as vehicleService } from "@/services/vehicle";
 import { notify } from "@/lib/notify";
+import { includesText, timeAgo } from "@/lib/format";
+import { VEHICLE_STATUS } from "@/lib/labels";
 
-export default function VehicleList() {
-  const { user } = useAuth();
-  const role = user?.role;
+export default function VehicleListPage() {
+  const list = useAsync(() => vehicleService.getAll(), [], { initial: [], pollMs: 60_000 });
+  const [status, setStatus] = useState("ALL");
+  const [query, setQuery] = useState("");
+  const [archiving, setArchiving] = useState(null);
+  const [pending, run] = useAction();
 
-  // États pour les données de l'API
-  const [vehicleList, setVehicleList] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const rows = useMemo(() => list.data
+    .filter((v) => status === "ALL" || v.status === status)
+    .filter((v) => includesText(`${v.immatriculation} ${v.name} ${v.brand} ${v.modele} ${v.driverFullName}`, query)), [list.data, status, query]);
+  const count = (s) => list.data.filter((v) => v.status === s).length;
 
-  // États pour la recherche et le filtrage
-  const [search, setSearch] = useState("");
-  const [filterBrand, setFilterBrand] = useState("");
-
-  // Récupération des données au montage du composant
-  useEffect(() => {
-    const fetchVehicles = async () => {
-      setIsLoading(true);
-      
-      const result = await vehicles.getAll();
-      
-      console.log("[Backend Response] Liste des véhicules :", result);
-      
-      if (result.success) {
-        setVehicleList(result.data || []);
-      } else {
-        notify.error(
-          result.error || "Impossible de charger les véhicules",
-          result.technical
-        );
-      }
-      setIsLoading(false);
-    };
-
-    fetchVehicles();
-  }, []);
-
-  // Fonction pour gérer l'archivage/suppression d'un véhicule
-  const handleArchive = async (id, plate) => {
-    if (confirm(`Voulez-vous vraiment supprimer le véhicule immatriculé ${plate} ?`)) {
-      const result = await vehicles.archive(id);
-      if (result.success) {
-        setVehicleList((prev) => prev.filter((v) => v.id !== id));
-        notify.success("Véhicule archivé");
-      } else {
-        notify.error(
-          result.error || "Impossible de supprimer ce véhicule",
-          result.technical
-        );
-      }
-    }
-  };
-
-  // Extraction dynamique des marques uniques
-  const brands = [...new Set(vehicleList.map((v) => v.brand).filter(Boolean))];
-
-  // Filtrage et recherche
-  const filteredVehicles = vehicleList.filter((v) => {
-    const matchesSearch = (v.plate || "").toLowerCase().includes(search.toLowerCase());
-    const matchesBrand = filterBrand === "" || v.brand === filterBrand;
-    return matchesSearch && matchesBrand;
+  const setVehicleStatus = (v, s) => run(async () => {
+    const r = await vehicleService.setStatus(v.id, s);
+    if (r.success) { notify.success("Statut mis à jour"); list.reload({ silent: true }); } else notify.error(r.error);
   });
 
-  // ÉCRAN DE CHARGEMENT
-  if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center py-32 space-y-4">
-        <Loader2 className="w-10 h-10 text-green-600 animate-spin" />
-        <p className="text-gray-500 font-medium">Chargement des véhicules...</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-8 space-y-6">
-      
-      {/* SEARCH + FILTER */}
-      <div className="flex flex-wrap gap-4 items-center">
-        {/* SEARCH */}
-        <input
-          type="text"
-          placeholder="Rechercher par immatriculation..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="input w-full sm:w-64 border rounded-lg px-4 py-2"
-        />
-
-        {/* FILTER */}
-        <div className="flex items-center gap-2 text-gray-600">
-          <Filter size={18} />
-          <span className="font-medium">Marque :</span>
-        </div>
-
-        <select
-          value={filterBrand}
-          onChange={(e) => setFilterBrand(e.target.value)}
-          className="border rounded-lg px-4 py-2 bg-green-600 text-white cursor-pointer"
-        >
-          <option value="" className="bg-white text-black">
-            Toutes les marques
-          </option>
-          {brands.map((brand) => (
-            <option key={brand} value={brand} className="bg-white text-black">
-              {brand}
-            </option>
-          ))}
-        </select>
-
-        <div className="ml-auto flex items-center gap-3">
-          {/* ADD VEHICLE */}
-          <Link
-            href="/admin/addVehicle"
-            className="flex items-center justify-center w-10 h-10 bg-green-600 text-white rounded-full shadow-md hover:bg-green-700 hover:scale-110 transition-all"
-            title="Ajouter un véhicule"
-          >
-            <Plus size={22} />
-          </Link>
-        </div>
+    <div>
+      <PageHeader title="Véhicules" subtitle="Flotte de collecte, chauffeurs affectés et disponibilité." actions={<Link href="/admin/addVehicle" className="btn-primary"><Plus size={16} /> Ajouter un véhicule</Link>} />
+      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <FilterPills value={status} onChange={setStatus} options={[
+          { value: "ALL", label: "Tous", count: list.data.length },
+          ...["AVAILABLE", "UNAVAILABLE", "SLEEPING", "BROKEN_DOWN", "OUT_OF_SERVICE"].map((s) => ({ value: s, label: VEHICLE_STATUS[s].label, count: count(s) })),
+        ]} />
+        <SearchInput value={query} onChange={setQuery} placeholder="Immatriculation, chauffeur…" className="lg:w-64" />
       </div>
-
-      {/* LIST / EMPTY STATE */}
-      {filteredVehicles.length === 0 ? (
-        
-        /* 🟢 NOUVEL AFFICHAGE VERT EN CAS DE LISTE VIDE */
-        <div className="flex flex-col items-center justify-center py-20 bg-green-50/50 rounded-2xl border-2 border-dashed border-green-300 space-y-3">
-          <LocalShippingIcon className="text-green-600" style={{ fontSize: 100 }} />
-          <p className="text-green-700 font-semibold text-lg">
-            Aucun véhicule trouvé.
-          </p>
-        </div>
-
+      {list.loading ? <CardsSkeleton /> : list.error ? <ErrorState message={list.error} onRetry={list.reload} /> : rows.length === 0 ? (
+        <Card><EmptyState icon={<Truck size={26} />} title="Aucun véhicule" description="Ajoutez vos camions de collecte et affectez-leur un chauffeur." action={<Link href="/admin/addVehicle" className="btn-primary"><Plus size={16} /> Ajouter un véhicule</Link>} /></Card>
       ) : (
-        <div className="space-y-6">
-          {filteredVehicles.map((vehicle) => (
-            <div
-              key={vehicle.id}
-              className="flex bg-green-50 rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition"
-            >
-              {/* IMAGE */}
-              <div className="w-48 h-48 bg-gray-100 flex items-center justify-center shrink-0">
-                {vehicle.photo ? (
-                  <img
-                    src={vehicle.photo}
-                    alt="vehicle"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="text-gray-400 text-2xl text-center">
-                    存放<br />
-                    <span className="text-xs">No Image</span>
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {rows.map((v) => (
+            <Card key={v.id} className="overflow-hidden">
+              <div className="relative h-36 bg-gradient-to-br from-slate-100 to-slate-200">
+                {v.photo ? <img src={v.photo} alt="" className="h-full w-full object-cover" /> : <Truck size={48} className="absolute inset-0 m-auto text-slate-300" />}
+                <div className="absolute left-3 top-3"><StatusBadge map={VEHICLE_STATUS} value={v.status} /></div>
+              </div>
+              <div className="p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-display text-lg font-bold text-slate-900">{v.immatriculation}</p>
+                    <p className="text-sm text-slate-500">{[v.name, v.brand, v.modele].filter(Boolean).join(" · ") || "—"}</p>
                   </div>
+                  <div className="flex gap-1">
+                    <Link href={`/admin/addVehicle?id=${v.id}`} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" title="Modifier"><Pencil size={16} /></Link>
+                    <button className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-600" title="Archiver" onClick={() => setArchiving(v)}><Archive size={16} /></button>
+                  </div>
+                </div>
+                <div className="mt-3 space-y-1.5 text-sm text-slate-600">
+                  <p className="flex items-center gap-2"><UserRound size={14} className="text-slate-400" />{v.driverFullName || <span className="italic text-slate-400">Aucun chauffeur</span>}</p>
+                  <p className="flex items-center gap-2"><Building2 size={14} className="text-slate-400" />{v.depotName || <span className="italic text-slate-400">Sans caserne</span>}</p>
+                  <p className="flex items-center gap-2"><Gauge size={14} className="text-slate-400" />{v.maxCapacity ? `${v.maxCapacity} t` : "Capacité —"} · position {v.lastPositionAt ? timeAgo(v.lastPositionAt) : "inconnue"}</p>
+                </div>
+                {v.status !== "UNAVAILABLE" && (
+                  <select className="field mt-4 py-2 text-xs" value={v.status} disabled={pending} onChange={(e) => setVehicleStatus(v, e.target.value)}>
+                    {["AVAILABLE", "SLEEPING", "BROKEN_DOWN", "OUT_OF_SERVICE"].map((s) => <option key={s} value={s}>{VEHICLE_STATUS[s].label}</option>)}
+                  </select>
                 )}
               </div>
-
-              {/* INFO */}
-              <div className="flex flex-col justify-between p-6 flex-1">
-                <div className="space-y-2">
-                  <h2 className="text-lg font-semibold text-gray-800">
-                    {vehicle.plate}
-                  </h2>
-                  <p className="text-gray-600">
-                    <span className="font-medium">Marque:</span> {vehicle.brand || "N/A"}
-                  </p>
-                  <p className="text-gray-600">
-                    <span className="font-medium">Modèle:</span> {vehicle.model || "N/A"}
-                  </p>
-                  <p className="text-gray-600">
-                    <span className="font-medium">Charge max:</span> {vehicle.maxLoad || "N/A"}
-                  </p>
-                </div>
-              </div>
-
-              {/* ACTIONS */}
-              {(role === "SUPER_ADMIN" || role === "ADMIN") && (
-                <div className="flex flex-col justify-between items-end p-6 border-l border-gray-100/50">
-                  <div className="text-green-700 font-medium underline text-sm">
-                    Actions
-                  </div>
-
-                  <div className="flex gap-3 mt-auto">
-                    {/* EDIT BUTTON */}
-                    <Link
-                      href={`/admin/editVehicle/${vehicle.id}`}
-                      title="éditer"
-                      className="w-9 h-9 flex items-center justify-center rounded-full bg-blue-50 hover:bg-blue-100 text-blue-600 transition"
-                    >
-                      <EditIcon fontSize="small" />
-                    </Link>
-
-                    {/* DELETE/ARCHIVE BUTTON */}
-                    <button
-                      onClick={() => handleArchive(vehicle.id, vehicle.plate)}
-                      title="supprimer"
-                      className="w-9 h-9 flex items-center justify-center rounded-full bg-red-50 hover:bg-red-100 text-red-600 transition"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            </Card>
           ))}
         </div>
       )}
+      <ConfirmDialog
+        open={!!archiving}
+        onClose={() => setArchiving(null)}
+        danger
+        pending={pending}
+        title="Archiver ce véhicule ?"
+        message={`${archiving?.immatriculation} sera retiré de la flotte et son chauffeur libéré.`}
+        confirmLabel="Archiver"
+        onConfirm={() => run(async () => {
+          const r = await vehicleService.archive(archiving.id);
+          if (r.success) { notify.success("Véhicule archivé"); setArchiving(null); list.reload({ silent: true }); } else notify.error(r.error);
+        })}
+      />
     </div>
   );
 }

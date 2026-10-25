@@ -1,392 +1,117 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { User, Calendar } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowRight, Building2, Camera, UserRound } from "lucide-react";
+import AuthLayout from "@/components/shell/AuthLayout";
+import { ChoiceCards, Input, PasswordInput, Select, passwordError } from "@/components/ui/Field";
+import Avatar from "@/components/ui/Avatar";
+import Spinner from "@/components/ui/Spinner";
 import { auth } from "@/services/auth";
+import { compressImage } from "@/lib/image";
 import { notify } from "@/lib/notify";
+import { TOWNS } from "@/lib/labels";
 
-function readImageAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-export default function Register() {
+export default function RegisterPage() {
   const router = useRouter();
-  const fileInputRef = useRef(null);
-  const [formData, setFormData] = useState({
-    accountType: "INDIVIDUAL",
-    firstName: "",
-    lastName: "",
-    dateOfBirth: "",
-    name: "",
-    email: "",
-    phone: "",
-    town: "",
-    quarter: "",
-    password: "",
-    confirmPassword: "",
-    profilePicture: "",
+  const [step, setStep] = useState(1);
+  const [form, setForm] = useState({
+    accountType: "INDIVIDUAL", firstName: "", lastName: "", dateOfBirth: "", name: "", email: "", phone: "",
+    town: "Yaoundé", quarter: "", password: "", confirmPassword: "", profilePicture: "", accept: false,
   });
+  const [loading, setLoading] = useState(false);
+  const set = (patch) => setForm((f) => ({ ...f, ...patch }));
+  const enterprise = form.accountType === "ENTERPRISE";
+  const pwdErr = passwordError(form.password);
 
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value,
-    });
-  };
-
-  const handlePhotoChange = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const dataUrl = await readImageAsDataUrl(file);
-      setFormData({
-        ...formData,
-        profilePicture: dataUrl,
-      });
-    } catch {
-      notify.error("Impossible de charger la photo de profil");
-    }
-  };
-
-  const validateForm = () => {
-    if (formData.accountType === "INDIVIDUAL") {
-      if (!formData.firstName.trim() || !formData.lastName.trim()) {
-        notify.error("Le prénom et le nom sont requis");
-        return false;
-      }
-      if (!formData.dateOfBirth.trim()) {
-        notify.error("La date de naissance est requise");
-        return false;
-      }
-    } else if (!formData.name.trim()) {
-      notify.error("Le nom de l'entreprise est requis");
-      return false;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      notify.error("Les mots de passe ne correspondent pas");
-      return false;
-    }
-
-    if (formData.password.length < 6) {
-      notify.warning("Le mot de passe doit contenir au moins 6 caractères");
-      return false;
-    }
-
-    return true;
-  };
-
-  const handleSubmit = async (e) => {
+  const next = (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
+    if (enterprise ? !form.name.trim() : !form.firstName.trim() || !form.lastName.trim() || !form.dateOfBirth) {
+      return notify.warning(enterprise ? "La raison sociale est requise" : "Prénom, nom et date de naissance sont requis");
     }
+    setStep(2);
+  };
 
-    setIsLoading(true);
+  const photo = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    try { set({ profilePicture: await compressImage(file, { maxSize: 400 }) }); } catch (err) { notify.error(err.message); }
+  };
 
-    const registerData = {
-      accountType: formData.accountType,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      dateOfBirth: formData.accountType === "INDIVIDUAL" ? formData.dateOfBirth : null,
-      name: formData.accountType === "ENTERPRISE" ? formData.name : "",
-      email: formData.email,
-      phone: formData.phone,
-      town: formData.town,
-      quarter: formData.quarter,
-      password: formData.password,
-      profilePicture: formData.profilePicture || null,
-    };
-
-    const result = await auth.register(registerData);
-
-    if (result.success) {
-      notify.success("Inscription réussie");
-      router.push("/connexion");
-    } else {
-      notify.error(
-        result.error || "Impossible de créer le compte",
-        result.technical
-      );
-    }
-
-    setIsLoading(false);
+  const submit = async (e) => {
+    e.preventDefault();
+    if (pwdErr) return notify.warning(pwdErr);
+    if (form.password !== form.confirmPassword) return notify.warning("Les mots de passe ne correspondent pas");
+    if (!form.accept) return notify.warning("Veuillez accepter les conditions d'utilisation");
+    setLoading(true);
+    const r = await auth.register({
+      accountType: form.accountType,
+      firstName: enterprise ? null : form.firstName, lastName: enterprise ? null : form.lastName,
+      dateOfBirth: enterprise ? null : form.dateOfBirth, name: enterprise ? form.name : null,
+      email: form.email.trim(), phone: form.phone, town: form.town, quarter: form.quarter,
+      password: form.password, profilePicture: form.profilePicture || null,
+    });
+    setLoading(false);
+    if (r.success) {
+      notify.success("Bienvenue sur WasteTracker !");
+      router.push("/client/dashboard");
+    } else notify.error(r.error, r.technical);
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2">
-      {/* SECTION GAUCHE */}
-      <div className="hidden lg:flex flex-col justify-center items-center bg-linear-to-br from-green-500 to-green-700 text-white p-16">
-        <img
-          src="/assets/create-account-image.png"
-          alt="Waste collection"
-          className="w-full max-w-sm mb-10 rounded-xl shadow-2xl"
-        />
-
-        <h2 className="text-4xl font-bold mb-6 text-center">
-          Rejoignez Waste Tracker
-        </h2>
-
-        <p className="text-lg text-center max-w-md opacity-90 leading-relaxed">
-          Recevez les notifications de collecte, signalez les bacs pleins
-          et contribuez à garder votre ville propre grâce à une gestion
-          intelligente des déchets.
-        </p>
-      </div>
-
-      {/* SECTION FORMULAIRE */}
-      <div className="flex items-center justify-center bg-green-50 p-4 sm:p-8">
-        <div className="w-full max-w-md">
-          <Link
-            href="/"
-            className="text-green-600 font-medium mb-6 inline-block hover:underline"
-          >
-            ← Retour à l'accueil
-          </Link>
-
-          <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-10">
-            <h1 className="text-2xl sm:text-3xl font-bold text-center text-green-600 mb-8">
-              Créer un compte
-            </h1>
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center">
-                  {formData.profilePicture ? (
-                    <Image
-                      src={formData.profilePicture}
-                      alt="Photo de profil"
-                      width={96}
-                      height={96}
-                      className="w-full h-full object-cover"
-                      unoptimized
-                    />
-                  ) : (
-                    <User size={36} className="text-gray-400" />
-                  )}
-                </div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handlePhotoChange}
-                  className="hidden"
-                  disabled={isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isLoading}
-                  className="text-sm text-green-600 font-medium hover:underline disabled:text-gray-400"
-                >
-                  {formData.profilePicture ? "Changer la photo" : "Ajouter une photo de profil"}
-                </button>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, accountType: "INDIVIDUAL" })}
-                  className={`flex-1 rounded-lg border px-4 py-2 font-semibold transition ${formData.accountType === "INDIVIDUAL" ? "border-green-600 bg-green-600 text-white" : "border-gray-300 text-gray-700"}`}
-                >
-                  Particulier
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, accountType: "ENTERPRISE" })}
-                  className={`flex-1 rounded-lg border px-4 py-2 font-semibold transition ${formData.accountType === "ENTERPRISE" ? "border-green-600 bg-green-600 text-white" : "border-gray-300 text-gray-700"}`}
-                >
-                  Entreprise
-                </button>
-              </div>
-
-              {formData.accountType === "INDIVIDUAL" ? (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      name="firstName"
-                      placeholder="Prénom"
-                      value={formData.firstName}
-                      onChange={handleChange}
-                      className="input-style"
-                      required
-                      disabled={isLoading}
-                    />
-
-                    <input
-                      type="text"
-                      name="lastName"
-                      placeholder="Nom"
-                      value={formData.lastName}
-                      onChange={handleChange}
-                      className="input-style"
-                      required
-                      disabled={isLoading}
-                    />
-                  </div>
-
-                  <div className="relative group">
-                    {/* ICÔNE DE CALENDRIER */}
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400 z-10">
-                      <Calendar size={18} />
-                    </div>
-
-                    {/* INPUT DATE */}
-                    <input
-                      type="date"
-                      name="dateOfBirth"
-                      value={formData.dateOfBirth}
-                      onChange={handleChange}
-                      required
-                      disabled={isLoading}
-                      max={new Date().toISOString().split("T")[0]}
-                      className="peer w-full pl-11 pr-4 pt-5 pb-1.5 rounded-lg border border-gray-300 outline-hidden focus:border-green-600 focus:ring-2 focus:ring-green-100 transition text-gray-700 text-sm cursor-pointer 
-                        [&::-webkit-calendar-picker-indicator]:cursor-pointer 
-                        [&::-webkit-calendar-picker-indicator]:filter 
-                        [&::-webkit-calendar-picker-indicator]:hue-rotate-60
-                        
-                        /* Masque le format dd/mm/yyyy initialement, et l'affiche uniquement quand l'input est focus ou possède une valeur */
-                        [&::-webkit-datetime-edit]:opacity-0
-                        focus:[&::-webkit-datetime-edit]:opacity-100
-                        [:not(:placeholder-shown)+&]:[&::-webkit-datetime-edit]:opacity-100
-                        [html:not([data-empty])+&]:[&::-webkit-datetime-edit]:opacity-100      /* Gestion pour Firefox et autres navigateurs */
-                        required:invalid:[&::-webkit-datetime-edit]:opacity-0
-                        focus:invalid:[&::-webkit-datetime-edit]:opacity-100
-                      "
-                      // Cet attribut fictif permet à CSS de savoir si l'input a une valeur
-                      placeholder=" " 
-                    />
-
-                    {/* LABEL FLOTTANT (Sert de placeholder, monte en haut à gauche lors du focus ou s'il y a une valeur) */}
-                    <label
-                      className="absolute left-11 top-1/2 -translate-y-1/2 text-gray-400 text-sm pointer-events-none transition-all duration-200
-                        peer-placeholder-shown:top-1/2 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400
-                        peer-focus:top-2.5 peer-focus:text-xs peer-focus:text-green-600
-                        
-                        /* Reste en haut si l'input contient du texte */
-                        peer-valid:top-2.5 peer-valid:text-xs peer-valid:text-green-600
-                        peer-not-placeholder-shown:top-2.5 peer-not-placeholder-shown:text-xs peer-not-placeholder-shown:text-green-600"
-                    >
-                      Date de naissance
-                    </label>
-                  </div>
-                </div>
-              ) : (
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Nom de l'entreprise"
-                  value={formData.name}
-                  onChange={handleChange}
-                  className="input-style"
-                  required
-                  disabled={isLoading}
-                />
-              )}
-
-              <input
-                type="email"
-                name="email"
-                placeholder="Adresse email"
-                value={formData.email}
-                onChange={handleChange}
-                className="input-style"
-                required
-                disabled={isLoading}
-              />
-
-              <input
-                type="tel"
-                name="phone"
-                placeholder="Téléphone"
-                value={formData.phone}
-                onChange={handleChange}
-                className="input-style"
-                required
-                disabled={isLoading}
-              />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  name="town"
-                  placeholder="Ville"
-                  value={formData.town}
-                  onChange={handleChange}
-                  className="input-style"
-                  required
-                  disabled={isLoading}
-                />
-
-                <input
-                  type="text"
-                  name="quarter"
-                  placeholder="Quartier"
-                  value={formData.quarter}
-                  onChange={handleChange}
-                  className="input-style"
-                  required
-                  disabled={isLoading}
-                />
-              </div>
-
-              <input
-                type="password"
-                name="password"
-                placeholder="Mot de passe"
-                value={formData.password}
-                onChange={handleChange}
-                className="input-style"
-                required
-                disabled={isLoading}
-              />
-
-              <input
-                type="password"
-                name="confirmPassword"
-                placeholder="Confirmer le mot de passe"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className="input-style"
-                required
-                disabled={isLoading}
-              />
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-green-600 text-white p-3 rounded-lg font-semibold hover:bg-green-700 transition-all duration-200 shadow-md hover:shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
-              >
-                {isLoading ? "Inscription en cours..." : "S'inscrire"}
-              </button>
-            </form>
-
-            <p className="text-center text-gray-500 mt-6">
-              Vous avez déjà un compte ?
-              <Link
-                href="/connexion"
-                className="text-green-600 ml-2 font-semibold hover:underline"
-              >
-                Se connecter
-              </Link>
-            </p>
+    <AuthLayout wide title="Créer un compte" subtitle={`Étape ${step} sur 2 — ${step === 1 ? "qui êtes-vous ?" : "vos coordonnées"}`}
+      footer={<>Déjà inscrit ? <Link href="/connexion" className="font-semibold text-brand-700 hover:underline">Se connecter</Link></>}>
+      <div className="mb-6 flex gap-2">{[1, 2].map((s) => <div key={s} className={`h-1.5 flex-1 rounded-full ${s <= step ? "bg-brand-600" : "bg-slate-200"}`} />)}</div>
+      {step === 1 ? (
+        <form onSubmit={next} className="space-y-5">
+          <ChoiceCards columns={2} value={form.accountType} onChange={(accountType) => set({ accountType })} options={[
+            { value: "INDIVIDUAL", label: "Particulier", description: "Pour votre foyer", icon: <UserRound size={16} /> },
+            { value: "ENTERPRISE", label: "Entreprise", description: "Commerce, bureau, institution", icon: <Building2 size={16} /> },
+          ]} />
+          <div className="flex items-center gap-4">
+            <label className="group relative cursor-pointer">
+              <Avatar person={enterprise ? { name: form.name } : form} src={form.profilePicture} size="lg" />
+              <span className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-white text-slate-600 shadow ring-1 ring-slate-200"><Camera size={13} /></span>
+              <input type="file" accept="image/*" className="hidden" onChange={photo} />
+            </label>
+            <p className="text-xs text-slate-500">Photo ou logo (facultatif)</p>
           </div>
-        </div>
-      </div>
-    </div>
+          {enterprise ? (
+            <Input label="Raison sociale" required value={form.name} onChange={(e) => set({ name: e.target.value })} placeholder="Ex. Boulangerie du Centre" />
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Input label="Prénom" required value={form.firstName} onChange={(e) => set({ firstName: e.target.value })} />
+              <Input label="Nom" required value={form.lastName} onChange={(e) => set({ lastName: e.target.value })} />
+              <Input className="sm:col-span-2" label="Date de naissance" type="date" required max={new Date().toISOString().slice(0, 10)} value={form.dateOfBirth} onChange={(e) => set({ dateOfBirth: e.target.value })} />
+            </div>
+          )}
+          <button className="btn-primary w-full py-3">Continuer <ArrowRight size={16} /></button>
+        </form>
+      ) : (
+        <form onSubmit={submit} className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input label="Adresse e-mail" type="email" required autoComplete="email" value={form.email} onChange={(e) => set({ email: e.target.value })} />
+            <Input label="Téléphone" type="tel" required value={form.phone} onChange={(e) => set({ phone: e.target.value })} placeholder="6XX XX XX XX" />
+            <Select label="Ville" required value={form.town} onChange={(e) => set({ town: e.target.value })} options={Object.keys(TOWNS).map((t) => ({ value: t, label: t }))} />
+            <div>
+              <Input label="Quartier" required list="reg-quarters" value={form.quarter} onChange={(e) => set({ quarter: e.target.value })} hint="Pour être prévenu des collectes" />
+              <datalist id="reg-quarters">{(TOWNS[form.town] || []).map((q) => <option key={q} value={q} />)}</datalist>
+            </div>
+            <PasswordInput label="Mot de passe" required autoComplete="new-password" value={form.password} onChange={(e) => set({ password: e.target.value })} error={form.password && pwdErr} hint="8 caractères minimum, avec une lettre et un chiffre" />
+            <PasswordInput label="Confirmation" required autoComplete="new-password" value={form.confirmPassword} onChange={(e) => set({ confirmPassword: e.target.value })} error={form.confirmPassword && form.confirmPassword !== form.password ? "Ne correspond pas" : null} />
+          </div>
+          <label className="flex cursor-pointer items-start gap-2.5 text-sm text-slate-600">
+            <input type="checkbox" checked={form.accept} onChange={(e) => set({ accept: e.target.checked })} className="mt-0.5 h-4 w-4 accent-brand-600" />
+            J'accepte que mes données (coordonnées, position, photos de signalement) soient utilisées pour la gestion de la collecte des déchets.
+          </label>
+          <div className="flex gap-2">
+            <button type="button" className="btn-secondary" onClick={() => setStep(1)}><ArrowLeft size={16} /></button>
+            <button className="btn-primary flex-1 py-3" disabled={loading}>{loading && <Spinner />} Créer mon compte</button>
+          </div>
+        </form>
+      )}
+    </AuthLayout>
   );
 }

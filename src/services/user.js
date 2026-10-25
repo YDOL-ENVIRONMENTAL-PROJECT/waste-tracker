@@ -10,6 +10,7 @@ function normalizeProfile(profile, authUser) {
     accountType: profile.accountType,
     firstName: profile.firstName,
     lastName: profile.lastName,
+    name: profile.name,
     email: profile.email,
     phone: profile.phone,
     town: profile.town,

@@ -1,57 +1,11 @@
-import { apiClient, fail } from "./api";
+import { get, post, put } from "./api";
 
 export const drivers = {
-  getAll: async () => {
-    try {
-      const response = await apiClient.get("/driver");
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "drivers.getAll",
-        error,
-        "Impossible de charger la liste des chauffeurs."
-      );
-    }
-  },
-
-  getCount: async () => {
-    try {
-      const response = await apiClient.get("/driver/count");
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "drivers.getCount",
-        error,
-        "Impossible de récupérer le nombre de chauffeurs."
-      );
-    }
-  },
-
-  create: async (driverData) => {
-    try {
-      const response = await apiClient.post("/driver", driverData);
-      console.info("[drivers.create] success", response.data);
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "drivers.create",
-        error,
-        "Impossible d'ajouter ce chauffeur. Réessayez plus tard."
-      );
-    }
-  },
-
-  archive: async (id) => {
-    try {
-      const response = await apiClient.put(`/driver/${id}/archive`);
-      console.info("[drivers.archive] success", { id });
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "drivers.archive",
-        error,
-        "Impossible de retirer ce chauffeur. Réessayez plus tard."
-      );
-    }
-  },
+  getAll: () => get("/driver", { error: "Impossible de charger la liste des chauffeurs." }),
+  getCount: () => get("/driver/count", { error: "Impossible de récupérer le nombre de chauffeurs." }),
+  getById: (id) => get(`/driver/${id}`, { error: "Impossible de charger ce chauffeur." }),
+  create: (data) => post("/driver", data, { error: "Impossible d'ajouter ce chauffeur. Réessayez plus tard." }),
+  update: (id, data) => put(`/driver/${id}`, data, { error: "Impossible de modifier ce chauffeur." }),
+  archive: (id) => put(`/driver/${id}/archive`, null, { error: "Impossible de retirer ce chauffeur." }),
+  restore: (id) => put(`/driver/${id}/restore`, null, { error: "Impossible de restaurer ce chauffeur." }),
 };

@@ -1,41 +1,20 @@
-import React from 'react';
-import { Recycle } from 'lucide-react';
+import { Recycle } from "lucide-react";
 
 export const LoadingIcon = ({ size = "md", className = "" }) => {
-  const sizeClasses = {
-    sm: "w-8 h-8",
-    md: "w-16 h-16",
-    lg: "w-24 h-24"
-  };
-  
-  const iconSize = {
-    sm: 16,
-    md: 32,
-    lg: 48
-  };
-
+  const sizes = { sm: "w-8 h-8", md: "w-14 h-14", lg: "w-20 h-20" };
   return (
-    <div className={`relative flex items-center justify-center ${sizeClasses[size]} ${className}`}>
-      {/* Outer spinning recycle symbol */}
-      <div className="absolute inset-0 animate-[spin_3s_linear_infinite] flex items-center justify-center text-white opacity-70">
-        <Recycle className="w-full h-full" strokeWidth={2.5} />
-      </div>
-      
-      {/* Backdrop glow */}
-      <div className="absolute inset-0 bg-green-400 blur-xl opacity-20 rounded-full animate-pulse"></div>
+    <div className={`relative flex items-center justify-center ${sizes[size]} ${className}`}>
+      <div className="absolute inset-0 animate-pulse rounded-full bg-brand-400/30 blur-xl" />
+      <Recycle className="relative h-full w-full animate-[spin_3s_linear_infinite] text-white" strokeWidth={2.2} />
     </div>
   );
 };
 
-export const LoadingScreen = ({ message = "Chargement..." }) => {
-  return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-green-700 backdrop-blur-sm">
-      <LoadingIcon size="lg" />
-      <h3 className="mt-6 text-lg font-medium text-white animate-pulse tracking-wide">
-        {message}
-      </h3>
-    </div>
-  );
-};
+export const LoadingScreen = ({ message = "Chargement..." }) => (
+  <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-brand-700 via-brand-800 to-brand-950">
+    <LoadingIcon size="lg" />
+    <p className="mt-6 text-base font-medium tracking-wide text-brand-50/90">{message}</p>
+  </div>
+);
 
 export default LoadingScreen;

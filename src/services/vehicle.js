@@ -1,71 +1,14 @@
-import { apiClient, fail } from "./api";
+import { get, post, put } from "./api";
 
 export const vehicles = {
-  getAll: async () => {
-    try {
-      const response = await apiClient.get("/vehicle");
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "vehicles.getAll",
-        error,
-        "Impossible de charger la liste des véhicules."
-      );
-    }
-  },
-
-  getCount: async () => {
-    try {
-      const response = await apiClient.get("/vehicle/count");
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "vehicles.getCount",
-        error,
-        "Impossible de récupérer le nombre de véhicules."
-      );
-    }
-  },
-
-  create: async (vehicleData) => {
-    try {
-      const response = await apiClient.post("/vehicle", vehicleData);
-      console.info("[vehicles.create] success", response.data);
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "vehicles.create",
-        error,
-        "Impossible d'ajouter ce véhicule. Réessayez plus tard."
-      );
-    }
-  },
-
-  update: async (id, vehicleData) => {
-    try {
-      const response = await apiClient.put(`/vehicle/${id}`, vehicleData);
-      console.info("[vehicles.update] success", { id });
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "vehicles.update",
-        error,
-        "Impossible de modifier ce véhicule. Réessayez plus tard."
-      );
-    }
-  },
-
-  archive: async (id) => {
-    try {
-      const response = await apiClient.put(`/vehicle/${id}/archive`);
-      console.info("[vehicles.archive] success", { id });
-      return { success: true, data: response.data };
-    } catch (error) {
-      return fail(
-        "vehicles.archive",
-        error,
-        "Impossible de retirer ce véhicule. Réessayez plus tard."
-      );
-    }
-  },
+  getAll: () => get("/vehicle", { error: "Impossible de charger la liste des véhicules." }),
+  getCount: () => get("/vehicle/count", { error: "Impossible de récupérer le nombre de véhicules." }),
+  nearby: (lat, lon, radius = 5000, availableOnly = true) =>
+    get("/vehicle/nearby", { params: { lat, lon, radius, availableOnly }, error: "Impossible de trouver les véhicules proches." }),
+  create: (data) => post("/vehicle", data, { error: "Impossible d'ajouter ce véhicule. Réessayez plus tard." }),
+  update: (id, data) => put(`/vehicle/${id}`, data, { error: "Impossible de modifier ce véhicule." }),
+  setStatus: (id, status) =>
+    put(`/vehicle/${id}/status`, null, { params: { status }, error: "Impossible de changer le statut." }),
+  archive: (id) => put(`/vehicle/${id}/archive`, null, { error: "Impossible de retirer ce véhicule." }),
+  restore: (id) => put(`/vehicle/${id}/restore`, null, { error: "Impossible de restaurer ce véhicule." }),
 };
