@@ -99,6 +99,24 @@ export const auth = {
     }
   },
 
+  activationStatus: async (token) => {
+    try {
+      const response = await apiClient.get("/auth/activation", { params: { token } });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return fail("auth.activationStatus", error, "Impossible de vérifier ce lien d'activation.");
+    }
+  },
+
+  activate: async (token, profilePicture) => {
+    try {
+      const response = await apiClient.post("/auth/activation", { token, profilePicture });
+      return { success: true, data: response.data };
+    } catch (error) {
+      return fail("auth.activate", error, "Impossible d'activer votre compte pour le moment.");
+    }
+  },
+
   deleteAccount: async (password) => {
     try {
       await apiClient.post("/auth/delete-account", { password });

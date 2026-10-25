@@ -11,6 +11,7 @@ import { Select } from "@/components/ui/Field";
 import EmptyState from "@/components/ui/EmptyState";
 import { ConfirmDialog, DetailRow, Drawer } from "@/components/ui/Modal";
 import { LeafletMap } from "@/components/map";
+import { ApprovalActions, DraftBadge } from "@/components/approval/Approval";
 import { useAction, useAsync } from "@/hooks/useAsync";
 import { garbagebins } from "@/services/garbagebin";
 import { notify } from "@/lib/notify";
@@ -29,11 +30,12 @@ export default function GarbageBinListPage() {
 
   const towns = [...new Set(list.data.map((b) => b.town).filter(Boolean))].sort();
   const rows = useMemo(() => list.data
-    .filter((b) => status === "ALL" || b.status === status)
+    .filter((b) => status === "ALL" || (status === "DRAFT" ? b.draft : !b.draft && b.status === status))
     .filter((b) => !town || b.town === town)
     .filter((b) => includesText(`${b.code} ${b.quarter} ${b.town} ${b.description}`, query)),
   [list.data, status, town, query]);
-  const count = (s) => list.data.filter((b) => b.status === s).length;
+  const count = (s) => list.data.filter((b) => !b.draft && b.status === s).length;
+  const drafts = list.data.filter((b) => b.draft).length;
 
   const act = (fn, msg, after) => run(async () => {
     const r = await fn();
@@ -50,20 +52,22 @@ export default function GarbageBinListPage() {
         <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl bg-slate-100">
           {b.photo ? <img src={b.photo} alt="" className="h-full w-full object-cover" /> : <Recycle size={18} className="m-2.5 text-slate-400" />}
         </div>
-        <div><p className="font-semibold text-slate-800">{b.code}</p><p className="text-xs text-slate-500">{b.capacityLiters ? `${b.capacityLiters} L` : "Capacité non renseignée"}</p></div>
+        <div><p className="font-semibold text-slate-800">{b.code}</p><p className="text-xs text-slate-500">{b.capacityLiters ? `${b.capacityLiters} kg` : "Capacité non renseignée"}</p></div>
       </div>
     ) },
     { key: "place", header: "Emplacement", render: (b) => <div><p className="text-slate-700">{b.quarter || "—"}</p><p className="text-xs text-slate-400">{b.town}</p></div> },
     { key: "emptied", header: "Dernier vidage", hideOnMobile: true, render: (b) => <span className="text-slate-500">{b.lastEmptiedAt ? timeAgo(b.lastEmptiedAt) : "—"}</span> },
-    { key: "status", header: "État", render: (b) => <StatusBadge map={BIN_STATUS} value={b.status} /> },
-    { key: "actions", header: "", className: "w-28", render: (b) => (
+    { key: "status", header: "État", render: (b) => (b.draft ? <DraftBadge item={b} /> : <StatusBadge map={BIN_STATUS} value={b.status} />) },
+    { key: "actions", header: "", className: "w-40", render: (b) => (
       <RowActions>
         {archived ? (
           <IconButton icon={<RotateCcw size={16} />} label="Restaurer" tone="green" onClick={() => act(() => garbagebins.restore(b.id), `Bac ${b.code} restauré`)} />
         ) : (
           <>
             <Link href={`/admin/addGarbageBin?id=${b.id}`} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" title="Modifier"><Pencil size={16} /></Link>
-            <IconButton icon={<Archive size={16} />} label="Archiver" tone="red" onClick={() => setArchiving(b)} />
+            {b.draft
+              ? <ApprovalActions item={b} service={garbagebins} label={`le bac ${b.code}`} onDone={() => list.reload({ silent: true })} compact archive={false} />
+              : <IconButton icon={<Archive size={16} />} label="Archiver" tone="red" onClick={() => setArchiving(b)} />}
           </>
         )}
       </RowActions>
@@ -79,7 +83,7 @@ export default function GarbageBinListPage() {
       />
       {!archived && (
         <div className="mb-6 grid gap-4 sm:grid-cols-3">
-          <StatCard icon={<Recycle size={20} />} label="Bacs actifs" value={list.data.length} loading={list.loading} tone="green" />
+          <StatCard icon={<Recycle size={20} />} label="Bacs actifs" value={list.data.length - drafts} loading={list.loading} tone="green" />
           <StatCard icon={<Recycle size={20} />} label="Pleins à vider" value={count("FULL")} loading={list.loading} tone="red" />
           <StatCard icon={<Recycle size={20} />} label="Hors service" value={count("OUT_OF_SERVICE")} loading={list.loading} tone="slate" />
         </div>
@@ -92,6 +96,7 @@ export default function GarbageBinListPage() {
               { value: "FULL", label: "Pleins" },
               { value: "EMPTY", label: "Vides" },
               { value: "OUT_OF_SERVICE", label: "Hors service" },
+              { value: "DRAFT", label: "Brouillons", count: drafts },
               { value: "ARCH", label: "Archivés" },
             ]} />
             {towns.length > 1 && <Select value={town} onChange={(e) => setTown(e.target.value)} placeholder="Toutes les villes" options={towns.map((t) => ({ value: t, label: t }))} className="w-44" />}
@@ -114,11 +119,12 @@ export default function GarbageBinListPage() {
           open
           onClose={() => setSelected(null)}
           title={`Bac ${selected.code}`}
-          subtitle={<StatusBadge map={BIN_STATUS} value={selected.status} />}
+          subtitle={selected.draft ? <DraftBadge item={selected} /> : <StatusBadge map={BIN_STATUS} value={selected.status} />}
           footer={
             <>
               <Link href={`/admin/addGarbageBin?id=${selected.id}`} className="btn-secondary"><Pencil size={15} /> Modifier</Link>
-              {selected.status === "FULL" && <Link href={`/admin/newMission?bin=${selected.id}`} className="btn-primary"><ClipboardPlus size={15} /> Créer une mission</Link>}
+              {selected.draft && <ApprovalActions item={selected} service={garbagebins} label={`le bac ${selected.code}`} onDone={() => { setSelected(null); list.reload({ silent: true }); }} archive={false} />}
+              {!selected.draft && selected.status === "FULL" && <Link href={`/admin/newMission?bin=${selected.id}`} className="btn-primary"><ClipboardPlus size={15} /> Créer une mission</Link>}
             </>
           }
         >
@@ -139,7 +145,7 @@ export default function GarbageBinListPage() {
           </div>
           <DetailRow label="Quartier">{selected.quarter}</DetailRow>
           <DetailRow label="Ville">{selected.town}</DetailRow>
-          <DetailRow label="Capacité">{selected.capacityLiters ? `${selected.capacityLiters} L` : "—"}</DetailRow>
+          <DetailRow label="Capacité">{selected.capacityLiters ? `${selected.capacityLiters} kg` : "—"}</DetailRow>
           <DetailRow label="Repère">{selected.description}</DetailRow>
           <DetailRow label="Dernier passage à plein">{formatDateTime(selected.lastFullAt)}</DetailRow>
           <DetailRow label="Dernier vidage">{formatDateTime(selected.lastEmptiedAt)}</DetailRow>

@@ -10,6 +10,7 @@ import { Input, Select, Textarea } from "@/components/ui/Field";
 import ImageInput from "@/components/ui/ImageInput";
 import Spinner from "@/components/ui/Spinner";
 import { MapPicker } from "@/components/map";
+import { ApprovalHint, SaveButtons } from "@/components/approval/Approval";
 import { garbagebins } from "@/services/garbagebin";
 import { notify } from "@/lib/notify";
 import { BIN_STATUS, TOWNS } from "@/lib/labels";
@@ -39,19 +40,19 @@ function BinForm() {
     });
   }, [id]);
 
-  const submit = async (e) => {
-    e.preventDefault();
+  const save = async (saveAsDraft) => {
+    if (!form.code.trim() || !form.quarter.trim()) return notify.warning("Le code et le quartier sont obligatoires");
     if (!form.position) return notify.warning("Placez le bac sur la carte");
     setSaving(true);
     const payload = {
       code: form.code.trim(), town: form.town, quarter: form.quarter, description: form.description || null,
       photo: form.photo || null, capacityLiters: form.capacityLiters ? Number(form.capacityLiters) : null,
-      latitude: form.position.latitude, longitude: form.position.longitude, status: form.status,
+      latitude: form.position.latitude, longitude: form.position.longitude, status: form.status, saveAsDraft,
     };
     const r = id ? await garbagebins.update(id, payload) : await garbagebins.create(payload);
     setSaving(false);
     if (r.success) {
-      notify.success(id ? "Bac mis à jour" : `Bac ${r.data.code} ajouté`);
+      notify.success(id ? "Bac mis à jour" : r.data.draft ? `Bac ${r.data.code} enregistré en brouillon` : `Bac ${r.data.code} ajouté`);
       router.push("/admin/garbageBinList");
     } else notify.error(r.error);
   };
@@ -59,19 +60,20 @@ function BinForm() {
   if (loading) return <Spinner />;
 
   return (
-    <form onSubmit={submit}>
+    <form onSubmit={(e) => { e.preventDefault(); save(undefined); }}>
       <PageHeader
         title={id ? `Modifier le bac ${form.code}` : "Ajouter un bac"}
         subtitle="Chaque bac doit être géolocalisé pour apparaître sur la carte et être proposé aux clients."
         actions={<Link href="/admin/garbageBinList" className="btn-ghost"><ArrowLeft size={16} /> Retour</Link>}
       />
+      {!id && <ApprovalHint />}
       <div className="grid gap-6 xl:grid-cols-[1fr_1.1fr]">
         <div className="space-y-6">
           <Card>
             <CardHeader title="Identification" />
             <div className="grid gap-4 px-5 pb-5 sm:grid-cols-2">
               <Input label="Code du bac" required value={form.code} onChange={(e) => set({ code: e.target.value.toUpperCase() })} placeholder="Ex. YDE-BAS-001" hint="Identifiant unique, visible sur le bac" />
-              <Input label="Capacité (litres)" type="number" min="0" value={form.capacityLiters} onChange={(e) => set({ capacityLiters: e.target.value })} placeholder="Ex. 660" />
+              <Input label="Capacité (kg)" type="number" min="0" value={form.capacityLiters} onChange={(e) => set({ capacityLiters: e.target.value })} placeholder="Ex. 660" />
               <Select label="Ville" required value={form.town} onChange={(e) => set({ town: e.target.value })} options={Object.keys(TOWNS).map((t) => ({ value: t, label: t }))} />
               <div>
                 <Input label="Quartier" required list="bin-quarters" value={form.quarter} onChange={(e) => set({ quarter: e.target.value })} placeholder="Ex. Bastos" />
@@ -91,9 +93,9 @@ function BinForm() {
           <div className="px-5 pb-5"><MapPicker value={form.position} onChange={(position) => set({ position })} height={440} kind="bin" /></div>
         </Card>
       </div>
-      <div className="mt-6 flex justify-end gap-2">
+      <div className="mt-6 flex flex-wrap justify-end gap-2">
         <Link href="/admin/garbageBinList" className="btn-secondary">Annuler</Link>
-        <button className="btn-primary" disabled={saving}>{saving && <Spinner />} {id ? "Enregistrer" : "Ajouter le bac"}</button>
+        <SaveButtons isEdit={!!id} saving={saving} onSave={save} />
       </div>
     </form>
   );

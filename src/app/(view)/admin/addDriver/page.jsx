@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, KeyRound, Smartphone } from "lucide-react";
+import { ArrowLeft, MailCheck, Smartphone } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { Input, PasswordInput, passwordError } from "@/components/ui/Field";
@@ -12,16 +12,10 @@ import { drivers as driverService } from "@/services/driver";
 import { notify } from "@/lib/notify";
 import { TOWNS } from "@/lib/labels";
 
-function generatePassword() {
-  const letters = "abcdefghjkmnpqrstuvwxyz";
-  const pick = (s) => s[Math.floor(Math.random() * s.length)];
-  return `${pick(letters).toUpperCase()}${Array.from({ length: 5 }, () => pick(letters)).join("")}${Math.floor(10 + Math.random() * 89)}`;
-}
-
 function DriverForm() {
   const router = useRouter();
   const id = useSearchParams().get("id");
-  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", town: "Yaoundé", quarter: "", site: "", dateOfBirth: "", password: id ? "" : generatePassword() });
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", town: "Yaoundé", quarter: "", site: "", dateOfBirth: "", password: "" });
   const [loading, setLoading] = useState(!!id);
   const [saving, setSaving] = useState(false);
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
@@ -40,13 +34,13 @@ function DriverForm() {
   const pwdError = passwordError(form.password);
   const submit = async (e) => {
     e.preventDefault();
-    if ((!id || form.password) && pwdError) return notify.warning(pwdError);
+    if (id && form.password && pwdError) return notify.warning(pwdError);
     setSaving(true);
-    const payload = { ...form, dateOfBirth: form.dateOfBirth || null, password: form.password || null };
+    const payload = { ...form, dateOfBirth: form.dateOfBirth || null, password: id ? form.password || null : null };
     const r = id ? await driverService.update(id, payload) : await driverService.create(payload);
     setSaving(false);
     if (r.success) {
-      notify.success(id ? "Chauffeur mis à jour" : `Compte créé : communiquez le mot de passe provisoire à ${form.firstName}`);
+      notify.success(id ? "Chauffeur mis à jour" : `Compte créé : un e-mail d'activation a été envoyé à ${r.data.email}`);
       router.push("/admin/driverList");
     } else notify.error(r.error);
   };
@@ -73,17 +67,24 @@ function DriverForm() {
           <CardHeader title="Accès à l'application mobile" icon={<Smartphone size={18} />} />
           <div className="space-y-4 px-5 pb-5">
             <Input label="Adresse e-mail (identifiant)" type="email" required value={form.email} onChange={(e) => set({ email: e.target.value })} />
-            <div>
-              <PasswordInput label={id ? "Nouveau mot de passe (facultatif)" : "Mot de passe provisoire"} required={!id} value={form.password} onChange={(e) => set({ password: e.target.value })} error={form.password && pwdError} hint="Au moins 8 caractères, dont une lettre et un chiffre" />
-              <button type="button" className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-brand-700 hover:underline" onClick={() => set({ password: generatePassword() })}><KeyRound size={13} /> Générer un mot de passe</button>
-            </div>
-            {!id && <p className="rounded-xl bg-amber-50 px-3 py-2 text-xs text-amber-800">Notez ce mot de passe et remettez-le au chauffeur : il pourra le modifier depuis son profil.</p>}
+            {id ? (
+              <PasswordInput label="Nouveau mot de passe (facultatif)" value={form.password} onChange={(e) => set({ password: e.target.value })} error={form.password && pwdError} hint="Au moins 8 caractères, dont une lettre et un chiffre" />
+            ) : (
+              <div className="rounded-xl bg-brand-50 px-4 py-3 text-sm text-brand-900">
+                <p className="flex items-center gap-2 font-semibold"><MailCheck size={16} /> Activation par e-mail</p>
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-[13px]">
+                  <li>Un mot de passe est généré automatiquement et envoyé au chauffeur avec un lien d'activation valable 24 h.</li>
+                  <li>En ouvrant le lien, il ajoute sa photo de profil (obligatoire) : le compte est alors activé.</li>
+                  <li>Il se connecte ensuite depuis le téléphone de service : il est relié automatiquement au véhicule.</li>
+                </ul>
+              </div>
+            )}
           </div>
         </Card>
       </div>
       <div className="mt-6 flex justify-end gap-2">
         <Link href="/admin/driverList" className="btn-secondary">Annuler</Link>
-        <button className="btn-primary" disabled={saving}>{saving && <Spinner />} {id ? "Enregistrer" : "Créer le compte"}</button>
+        <button className="btn-primary" disabled={saving}>{saving && <Spinner />} {id ? "Enregistrer" : "Créer et envoyer le lien"}</button>
       </div>
     </form>
   );

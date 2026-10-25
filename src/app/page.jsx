@@ -41,7 +41,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,var(--color-brand-100),transparent_55%)]" />
         <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-5 py-20 lg:grid-cols-[1.1fr_1fr] lg:py-28">
           <div className="animate-slide-up">
-            <span className="chip bg-brand-50 text-brand-800 ring-1 ring-brand-600/15"><Recycle size={13} /> YDOL Ingénierie · Yaoundé & Douala</span>
+            <span className="chip bg-brand-50 text-brand-800 ring-1 ring-brand-600/15"><Recycle size={13} /> YDOL Ingénierie · Makepe, Douala - Cameroun</span>
             <h1 className="mt-5 text-4xl font-extrabold leading-[1.1] text-slate-900 sm:text-5xl lg:text-6xl">
               La collecte des déchets, <span className="bg-gradient-to-r from-brand-600 to-emerald-500 bg-clip-text text-transparent">enfin connectée.</span>
             </h1>

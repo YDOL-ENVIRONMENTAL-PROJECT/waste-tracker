@@ -1,4 +1,4 @@
-import { get, post, put } from "./api";
+import { del, get, post, put } from "./api";
 
 export const garbagebins = {
   getAll: () => get("/bin", { error: "Impossible de charger la liste des bacs." }),
@@ -11,6 +11,8 @@ export const garbagebins = {
   update: (id, data) => put(`/bin/${id}`, data, { error: "Impossible de modifier ce bac." }),
   setStatus: (id, status) =>
     put(`/bin/${id}/status`, null, { params: { status }, error: "Impossible de changer le statut du bac." }),
+  approve: (id) => put(`/bin/${id}/approve`, null, { error: "Impossible de valider ce bac." }),
+  remove: (id) => del(`/bin/${id}`, { error: "Impossible de supprimer ce bac." }),
   archive: (id) => put(`/bin/${id}/archive`, null, { error: "Impossible de retirer ce bac." }),
   restore: (id) => put(`/bin/${id}/restore`, null, { error: "Impossible de restaurer ce bac." }),
 };

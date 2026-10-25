@@ -1,5 +1,6 @@
 "use client";
 
+import { withoutDrafts } from "@/services/api";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Building2, Crown, RefreshCw, Recycle, Siren, Truck } from "lucide-react";
@@ -22,9 +23,9 @@ const VEHICLE_COLOR = { AVAILABLE: "green", UNAVAILABLE: "blue", SLEEPING: "viol
 const REFRESH_MS = 30_000;
 
 export default function AdminMapPage() {
-  const bins = useAsync(() => garbagebins.getAll(), [], { initial: [], pollMs: REFRESH_MS });
-  const fleet = useAsync(() => vehicleService.getAll(), [], { initial: [], pollMs: REFRESH_MS });
-  const depots = useAsync(() => depotService.getAll(), [], { initial: [] });
+  const bins = useAsync(() => withoutDrafts(garbagebins.getAll()), [], { initial: [], pollMs: REFRESH_MS });
+  const fleet = useAsync(() => withoutDrafts(vehicleService.getAll()), [], { initial: [], pollMs: REFRESH_MS });
+  const depots = useAsync(() => withoutDrafts(depotService.getAll()), [], { initial: [] });
   const reports = useAsync(() => reportService.getAll(), [], { initial: [], pollMs: REFRESH_MS });
   const premium = useAsync(() => subscriptionService.getAll("ACTIVE"), [], { initial: [] });
 

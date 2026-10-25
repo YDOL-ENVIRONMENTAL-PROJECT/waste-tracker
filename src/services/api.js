@@ -113,3 +113,9 @@ export const getErrorMessage = (error, defaultMessage = "Une erreur est survenue
   logTechnical("getErrorMessage", sanitizedError);
   return defaultMessage;
 };
+
+/** Retire les brouillons (non validés) d'une liste : ils ne sont pas encore opérationnels. */
+export const withoutDrafts = async (promise) => {
+  const r = await promise;
+  return r.success ? { ...r, data: r.data.filter((x) => !x.draft) } : r;
+};

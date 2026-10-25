@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Bell, Boxes, Building2, ClipboardList, Gauge, Map as MapIcon, Megaphone, Menu, PackageCheck, Recycle,
-  ShieldCheck, ShoppingBag, Siren, Sparkles, Truck, UserRound, Users, X, CalendarClock, Crown,
+  FileClock, ShieldCheck, ShoppingBag, Siren, Sparkles, Truck, UserRound, Users, X, CalendarClock, Crown,
 } from "lucide-react";
 import Brand from "./Brand";
 import UserMenu from "./UserMenu";
@@ -21,6 +21,7 @@ function buildNav(isSuperAdmin, counters) {
         { href: "/admin/map", label: "Carte en direct", icon: MapIcon },
         { href: "/admin/missionList", label: "Missions", icon: ClipboardList, match: ["/admin/newMission"] },
         { href: "/admin/reports", label: "Signalements", icon: Siren, badge: counters.openReports, badgeTone: "red" },
+        { href: "/admin/validations", label: isSuperAdmin ? "Validations" : "Brouillons", icon: FileClock, badge: counters.pendingApprovals, badgeTone: isSuperAdmin ? "violet" : undefined },
       ],
     },
     {
@@ -28,7 +29,7 @@ function buildNav(isSuperAdmin, counters) {
       items: [
         { href: "/admin/garbageBinList", label: "Bacs à ordures", icon: Recycle, match: ["/admin/addGarbageBin"] },
         { href: "/admin/vehicleList", label: "Véhicules", icon: Truck, match: ["/admin/addVehicle"] },
-        { href: "/admin/driverList", label: "Chauffeurs", icon: UserRound, match: ["/admin/addDriver"] },
+        { href: "/admin/driverList", label: "Chauffeurs", icon: UserRound, match: ["/admin/addDriver"], badge: counters.pendingActivations },
         { href: "/admin/depots", label: "Casernes", icon: Building2 },
       ],
     },
@@ -71,7 +72,7 @@ function NavItem({ item, active, onNavigate }) {
       <Icon size={17} className={active ? "text-brand-600" : "text-brand-300 group-hover:text-white"} />
       <span className="flex-1 truncate">{item.label}</span>
       {item.badge > 0 && (
-        <span className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-[11px] font-bold ${item.badgeTone === "red" ? "bg-red-500 text-white" : active ? "bg-brand-100 text-brand-800" : "bg-white/20 text-white"}`}>
+        <span className={`min-w-5 rounded-full px-1.5 py-0.5 text-center text-[11px] font-bold ${item.badgeTone === "red" ? "bg-red-500 text-white" : item.badgeTone === "violet" ? "bg-violet-500 text-white" : active ? "bg-brand-100 text-brand-800" : "bg-white/20 text-white"}`}>
           {item.badge}
         </span>
       )}
