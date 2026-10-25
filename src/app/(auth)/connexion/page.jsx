@@ -43,7 +43,7 @@ function LoginForm() {
   };
 
   return (
-    <AuthLayout title="Bon retour 👋" subtitle="Connectez-vous à votre espace WasteTracker."
+    <AuthLayout image="/assets/login-image.jpeg" title="Bon retour 👋" subtitle="Connectez-vous à votre espace WasteTracker."
       footer={<>Pas encore de compte ? <Link href="/inscription" className="font-semibold text-brand-700 hover:underline">Créer un compte</Link></>}>
       <form onSubmit={submit} className="space-y-4">
         <Input label="Adresse e-mail" type="email" required autoComplete="email" icon={<Mail size={16} />} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="vous@exemple.cm" />
