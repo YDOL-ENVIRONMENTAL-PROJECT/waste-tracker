@@ -18,7 +18,7 @@ import { formatDateTime, timeAgo } from "@/lib/format";
 import { REPORT_STATUS, REPORT_TYPE, ROLE } from "@/lib/labels";
 
 export default function AdminReportsPage() {
-  const list = useAsync(() => reportService.getAll(), [], { initial: [], pollMs: 30_000 });
+  const list = useAsync(() => reportService.getAll(), [], { initial: [], pollMs: 30_000, sync: ["admin:reports"] });
   const [filter, setFilter] = useState("NEW");
   const [rejecting, setRejecting] = useState(null);
   const [zoom, setZoom] = useState(null);

@@ -112,3 +112,62 @@ export function passwordError(password) {
   }
   return null;
 }
+
+/**
+ * Liste déroulante avec saisie pour filtrer rapidement (ex. choix d'une caserne parmi plusieurs dizaines).
+ * options : [{ value, label, description }].
+ */
+export function SearchSelect({ label, hint, error, required, className = "", options = [], value, onChange, placeholder = "Rechercher…", emptyText = "Aucun résultat" }) {
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+  const selected = options.find((o) => o.value === value);
+  const norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  const matches = options.filter((o) => norm(`${o.label} ${o.description || ""}`).includes(norm(query)));
+
+  const choose = (o) => {
+    onChange(o.value);
+    setQuery("");
+    setOpen(false);
+  };
+  const onKeyDown = (e) => {
+    if (e.key === "ArrowDown") { e.preventDefault(); setOpen(true); setActive((i) => Math.min(i + 1, matches.length - 1)); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); setActive((i) => Math.max(i - 1, 0)); }
+    else if (e.key === "Enter" && open && matches[active]) { e.preventDefault(); choose(matches[active]); }
+    else if (e.key === "Escape") setOpen(false);
+  };
+
+  return (
+    <Field label={label} hint={hint} error={error} required={required} className={className}>
+      <div className="relative">
+        <input
+          className={`field pr-9 ${error ? "border-red-300" : ""}`}
+          role="combobox"
+          aria-expanded={open}
+          value={open ? query : selected?.label || ""}
+          placeholder={selected ? selected.label : placeholder}
+          onFocus={() => { setOpen(true); setActive(0); }}
+          onBlur={() => setTimeout(() => setOpen(false), 150)}
+          onChange={(e) => { setQuery(e.target.value); setOpen(true); setActive(0); }}
+          onKeyDown={onKeyDown}
+        />
+        <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-400" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6" /></svg>
+        {open && (
+          <ul role="listbox" className="absolute z-30 mt-1 max-h-60 w-full overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg">
+            {matches.length === 0 ? (
+              <li className="px-3 py-2 text-sm text-slate-400">{emptyText}</li>
+            ) : matches.map((o, i) => (
+              <li key={o.value} role="option" aria-selected={o.value === value}
+                onMouseDown={(e) => { e.preventDefault(); choose(o); }}
+                onMouseEnter={() => setActive(i)}
+                className={`cursor-pointer px-3 py-2 text-sm ${i === active ? "bg-brand-50" : ""} ${o.value === value ? "font-semibold text-brand-800" : "text-slate-700"}`}>
+                {o.label}
+                {o.description && <span className="block text-xs font-normal text-slate-400">{o.description}</span>}
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </Field>
+  );
+}

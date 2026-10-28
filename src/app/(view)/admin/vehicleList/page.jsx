@@ -26,13 +26,13 @@ const CSV_COLUMNS = [
   { key: "brand", label: "Marque" },
   { key: "modele", label: "Modèle" },
   { key: "maxCapacity", label: "Capacité (tonnes)" },
-  { key: "depot", label: "Nom de la caserne" },
+  { key: "depot", label: "Nom de la caserne de rattachement", required: true },
 ];
 
 export default function VehicleListPage() {
   const { user } = useSession();
-  const list = useAsync(() => vehicleService.getAll(), [], { initial: [], pollMs: 60_000 });
-  const depots = useAsync(() => depotService.getAll(), [], { initial: [] });
+  const list = useAsync(() => vehicleService.getAll(), [], { initial: [], pollMs: 60_000, sync: ["admin:vehicles"] });
+  const depots = useAsync(() => depotService.getAll(), [], { initial: [], sync: ["admin:depots"] });
   const [status, setStatus] = useState("ALL");
   const [query, setQuery] = useState("");
   const [importOpen, setImportOpen] = useState(false);
@@ -49,7 +49,7 @@ export default function VehicleListPage() {
     if (r.success) { notify.success("Statut mis à jour"); list.reload({ silent: true }); } else notify.error(r.error);
   });
 
-  const depotId = (name) => depots.data.find((d) => d.name.toLowerCase() === (name || "").toLowerCase())?.id || null;
+  const depotId = (name) => depots.data.find((d) => !d.draft && d.name.toLowerCase() === (name || "").trim().toLowerCase())?.id || null;
 
   return (
     <div>

@@ -10,6 +10,7 @@ import EmptyState from "@/components/ui/EmptyState";
 import Spinner from "@/components/ui/Spinner";
 import { LeafletMap, DEFAULT_CENTER } from "@/components/map";
 import { useSession } from "@/components/providers/SessionProvider";
+import { useSyncEffect } from "@/components/providers/SyncProvider";
 import { garbagebins } from "@/services/garbagebin";
 import { currentPosition } from "@/lib/image";
 import { notify } from "@/lib/notify";
@@ -51,6 +52,11 @@ export default function ClientMapPage() {
     garbagebins.nearby(origin[0], origin[1], RADIUS).then((r) => r.success ? setBins(r.data) : notify.error(r.error));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [origin?.[0], origin?.[1]]);
+
+  // Bac ajouté, vidé ou signalé plein entre-temps : liste mise à jour
+  useSyncEffect(["bins"], () => {
+    if (origin) garbagebins.nearby(origin[0], origin[1], RADIUS).then((r) => r.success && setBins(r.data));
+  });
 
   const markers = [
     ...(origin ? [{ id: "me", position: origin, kind: "me", color: "blue", size: 22 }] : []),

@@ -151,7 +151,7 @@ export default function Home() {
             <h2 className="mt-3 text-3xl font-bold sm:text-4xl">Vos déchets collectés chez vous.</h2>
             <p className="mt-3 max-w-lg text-amber-50">Activez votre compte premium (10 000 F CFA, une seule fois), puis choisissez votre fréquence, de 1 à 7 passages par semaine. Le prix des collectes est transparent : 1 000 F CFA par kilomètre parcouru depuis la caserne la plus proche.</p>
           </div>
-          <Link href="/inscription" className="btn bg-white px-6 py-3 text-base text-orange-600 hover:bg-orange-50"><Crown size={18} /> Devenir premium</Link>
+          <Link href="/inscription" className="btn bg-white px-6 py-3 text-base text-orange-600 hover:bg-orange-50"><Crown size={18} /> Découvrir la collecte à domicile</Link>
         </div>
       </section>
 

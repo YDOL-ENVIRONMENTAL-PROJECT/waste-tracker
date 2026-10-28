@@ -21,7 +21,7 @@ const ACTIVE = ["PLANNED", "ASSIGNED", "ACCEPTED", "IN_PROGRESS"];
 export default function MissionListPage() {
   const [day, setDay] = useState(isoDate());
   const [allDates, setAllDates] = useState(false);
-  const list = useAsync(() => missionService.getAll(allDates ? {} : { date: day }), [day, allDates], { initial: [], pollMs: 45_000 });
+  const list = useAsync(() => missionService.getAll(allDates ? {} : { date: day }), [day, allDates], { initial: [], pollMs: 45_000, sync: ["admin:missions"] });
   const [filter, setFilter] = useState("ALL");
   const [purpose, setPurpose] = useState("ALL");
   const [query, setQuery] = useState("");

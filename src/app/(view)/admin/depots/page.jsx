@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Archive, Building2, MapPin, Pencil, Plus, Truck } from "lucide-react";
+import { Archive, Building2, MapPin, Pencil, Plus, Truck, UserRound } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import EmptyState, { ErrorState } from "@/components/ui/EmptyState";
@@ -18,7 +18,7 @@ import { notify } from "@/lib/notify";
 const EMPTY = { name: "", address: "", town: "Yaoundé", capacity: "", position: null };
 
 export default function DepotsPage() {
-  const list = useAsync(() => depotService.getAll(), [], { initial: [] });
+  const list = useAsync(() => depotService.getAll(), [], { initial: [], sync: ["admin:depots", "admin:vehicles", "admin:drivers"] });
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState(EMPTY);
   const [archiving, setArchiving] = useState(null);
@@ -55,7 +55,7 @@ export default function DepotsPage() {
                 <div className="min-w-0 flex-1">
                   <p className="flex flex-wrap items-center gap-2 font-semibold text-slate-900">{d.name}<DraftBadge item={d} /></p>
                   <p className="flex items-center gap-1 truncate text-xs text-slate-500"><MapPin size={12} />{[d.address, d.town].filter(Boolean).join(", ") || "—"}</p>
-                  <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500"><Truck size={12} />{d.vehicleCount} véhicule(s){d.capacity ? ` / ${d.capacity} places` : ""}</p>
+                  <p className="mt-0.5 flex items-center gap-1 text-xs text-slate-500"><Truck size={12} />{d.vehicleCount} véhicule(s){d.capacity ? ` / ${d.capacity} places` : ""} · <UserRound size={12} />{d.driverCount ?? 0} chauffeur(s)</p>
                 </div>
                 <button className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" onClick={() => open(d)} title="Modifier"><Pencil size={16} /></button>
                 {d.draft

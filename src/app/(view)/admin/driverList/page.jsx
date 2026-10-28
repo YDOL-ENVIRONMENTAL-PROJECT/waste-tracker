@@ -12,6 +12,7 @@ import Avatar from "@/components/ui/Avatar";
 import { ConfirmDialog } from "@/components/ui/Modal";
 import CsvImportModal from "@/components/shared/CsvImportModal";
 import { useAction, useAsync } from "@/hooks/useAsync";
+import { depots as depotService } from "@/services/depot";
 import { useSession } from "@/components/providers/SessionProvider";
 import { drivers as driverService } from "@/services/driver";
 import { notify } from "@/lib/notify";
@@ -25,13 +26,15 @@ const CSV_COLUMNS = [
   { key: "phone", label: "Téléphone" },
   { key: "town", label: "Ville" },
   { key: "quarter", label: "Quartier" },
-  { key: "site", label: "Site d'affectation" },
+  { key: "depot", label: "Nom de la caserne de rattachement", required: true },
   { key: "dateOfBirth", label: "Date de naissance (aaaa-mm-jj)" },
 ];
 
 export default function DriverListPage() {
   const { user } = useSession();
-  const list = useAsync(() => driverService.getAll(), [], { initial: [], pollMs: 60_000 });
+  const list = useAsync(() => driverService.getAll(), [], { initial: [], pollMs: 60_000, sync: ["admin:drivers"] });
+  const depots = useAsync(() => depotService.getAll(), [], { initial: [], sync: ["admin:depots"] });
+  const depotId = (name) => depots.data.find((d) => !d.draft && d.name.toLowerCase() === (name || "").trim().toLowerCase())?.id || null;
   const [filter, setFilter] = useState("ALL");
   const [query, setQuery] = useState("");
   const [confirm, setConfirm] = useState(null); // { driver, action: "archive" | "delete" }
@@ -43,7 +46,7 @@ export default function DriverListPage() {
 
   const rows = useMemo(() => list.data
     .filter((d) => filter === "ALL" || (filter === "ONLINE" ? d.status === "ONLINE" : filter === "PENDING" ? isPending(d) : filter === "NOVEHICLE" ? !isPending(d) && !d.vehicleId : true))
-    .filter((d) => includesText(`${d.firstName} ${d.lastName} ${d.email} ${d.phone} ${d.site} ${d.vehicleImmatriculation}`, query)), [list.data, filter, query]);
+    .filter((d) => includesText(`${d.firstName} ${d.lastName} ${d.email} ${d.phone} ${d.depotName} ${d.vehicleImmatriculation}`, query)), [list.data, filter, query]);
 
   const act = (fn, msg) => run(async () => {
     const r = await fn();
@@ -54,7 +57,7 @@ export default function DriverListPage() {
     { key: "name", header: "Chauffeur", render: (d) => (
       <div className="flex items-center gap-3">
         <Avatar person={d} online={isPending(d) ? undefined : d.status === "ONLINE"} />
-        <div className="min-w-0"><p className="font-semibold text-slate-800">{d.firstName} {d.lastName}</p><p className="truncate text-xs text-slate-500">{d.site || d.town || "—"}</p></div>
+        <div className="min-w-0"><p className="font-semibold text-slate-800">{d.firstName} {d.lastName}</p><p className="truncate text-xs text-slate-500">{d.depotName || <span className="text-amber-700">Caserne à renseigner</span>}</p></div>
       </div>
     ) },
     { key: "contact", header: "Contact", hideOnMobile: true, render: (d) => (
@@ -119,9 +122,9 @@ export default function DriverListPage() {
       <CsvImportModal open={importOpen} onClose={() => setImportOpen(false)} title="Importer des chauffeurs"
         description="Chaque chauffeur importé reçoit un e-mail avec son lien d'activation (valable 24 h) et son mot de passe."
         columns={CSV_COLUMNS} templateName="modele_chauffeurs.csv"
-        example={["Paul", "Mba", "paul.mba@exemple.cm", "677000000", "Yaoundé", "Mvan", "Caserne de Mvan", "1990-05-14"]}
+        example={["Paul", "Mba", "paul.mba@exemple.cm", "677000000", "Yaoundé", "Mvan", depots.data.find((d) => !d.draft)?.name || "Caserne de Mvan", "1990-05-14"]}
         toRow={(r) => ({ firstName: r.firstname, lastName: r.lastname, email: r.email, phone: r.phone || null, town: r.town || null,
-          quarter: r.quarter || null, site: r.site || null, dateOfBirth: r.dateofbirth || null })}
+          quarter: r.quarter || null, depotId: depotId(r.depot), dateOfBirth: r.dateofbirth || null })}
         onImport={(rows) => driverService.importMany(rows)} onDone={() => list.reload({ silent: true })} />
     </div>
   );

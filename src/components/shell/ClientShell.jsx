@@ -14,7 +14,7 @@ const NAV = [
   { href: "/client/reports", label: "Signaler", icon: Megaphone, primary: true },
   { href: "/client/map", label: "Bacs proches", icon: MapIcon, desktopOnly: true },
   { href: "/client/shop", label: "Boutique", icon: ShoppingBag, match: ["/client/orders"] },
-  { href: "/client/premium", label: "Premium", icon: Crown },
+  { href: "/client/premium", label: "Collecte à domicile", icon: Crown },
 ];
 
 function Shell({ children }) {

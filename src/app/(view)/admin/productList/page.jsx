@@ -18,7 +18,7 @@ import { formatFcfa, includesText } from "@/lib/format";
 import { PRODUCT_STATUS } from "@/lib/labels";
 
 export default function ProductListPage() {
-  const list = useAsync(() => productService.getAll(), [], { initial: [] });
+  const list = useAsync(() => productService.getAll(), [], { initial: [], sync: ["admin:products"] });
   const [filter, setFilter] = useState("ALL");
   const [query, setQuery] = useState("");
   const [archiving, setArchiving] = useState(null);

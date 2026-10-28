@@ -17,8 +17,8 @@ import { formatDate, formatDateTime, formatFcfa, includesText } from "@/lib/form
 import { SLOTS, SUBSCRIPTION_STATUS } from "@/lib/labels";
 
 export default function SubscriptionsPage() {
-  const list = useAsync(() => subscriptionService.getAll(), [], { initial: [] });
-  const activations = useAsync(() => premium.activations(), [], { initial: [] });
+  const list = useAsync(() => subscriptionService.getAll(), [], { initial: [], sync: ["admin:subscriptions"] });
+  const activations = useAsync(() => premium.activations(), [], { initial: [], sync: ["admin:subscriptions"] });
   const [filter, setFilter] = useState("PENDING_PAYMENT");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(null);

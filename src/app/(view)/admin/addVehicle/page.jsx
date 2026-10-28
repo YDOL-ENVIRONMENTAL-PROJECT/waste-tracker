@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, Smartphone } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import { Card, CardHeader } from "@/components/ui/Card";
-import { Input, Select } from "@/components/ui/Field";
+import { Input, SearchSelect, Select } from "@/components/ui/Field";
 import ImageInput from "@/components/ui/ImageInput";
 import Spinner from "@/components/ui/Spinner";
 import { ApprovalHint, SaveButtons } from "@/components/approval/Approval";
@@ -38,6 +38,7 @@ function VehicleForm() {
   const depot = depots.data.find((d) => d.id === form.depotId);
   const save = async (saveAsDraft) => {
     if (!form.immatriculation.trim()) return notify.warning("L'immatriculation est obligatoire");
+    if (!form.depotId) return notify.warning("Choisissez la caserne de rattachement du véhicule");
     setSaving(true);
     const payload = {
       immatriculation: form.immatriculation, name: form.name || null, brand: form.brand || null, modele: form.modele || null,
@@ -70,9 +71,10 @@ function VehicleForm() {
               <Input label="Modèle" value={form.modele} onChange={(e) => set({ modele: e.target.value })} placeholder="D-Wide" />
               <Input label="Capacité maximale (tonnes)" type="number" step="0.1" min="0" value={form.maxCapacity} onChange={(e) => set({ maxCapacity: e.target.value })} />
               <Select label="Statut" value={form.status} onChange={(e) => set({ status: e.target.value })} options={["AVAILABLE", "SLEEPING", "BROKEN_DOWN", "OUT_OF_SERVICE"].map((s) => ({ value: s, label: VEHICLE_STATUS[s].label }))} />
-              <Select className="sm:col-span-2" label="Caserne de rattachement" value={form.depotId} onChange={(e) => set({ depotId: e.target.value })} placeholder="— Aucune —"
-                options={depots.data.filter((d) => !d.draft).map((d) => ({ value: d.id, label: d.name }))}
-                hint={depots.data.length === 0 ? "Ajoutez d'abord une caserne (menu Casernes)." : null} />
+              <SearchSelect className="sm:col-span-2" label="Caserne de rattachement" required value={form.depotId} onChange={(depotId) => set({ depotId })}
+                placeholder="Tapez pour rechercher une caserne…" emptyText="Aucune caserne validée ne correspond"
+                options={depots.data.filter((d) => !d.draft).map((d) => ({ value: d.id, label: d.name, description: [d.address, d.town].filter(Boolean).join(", ") }))}
+                hint={depots.data.length === 0 ? "Ajoutez d'abord une caserne (menu Casernes)." : "Lieu de stationnement du véhicule : obligatoire."} />
             </div>
           </Card>
           <Card>

@@ -33,7 +33,7 @@ export default function ValidationsPage() {
     const failed = results.find((r) => !r.success);
     if (failed) return failed;
     return { success: true, data: Object.fromEntries(KINDS.map((k, i) => [k.key, results[i].data.filter((x) => x.draft)])) };
-  }, [], { initial: {}, pollMs: 60_000 });
+  }, [], { initial: {}, pollMs: 60_000, sync: ["admin:bins", "admin:vehicles", "admin:depots", "admin:products"] });
 
   const total = KINDS.reduce((n, k) => n + (data.data[k.key]?.length || 0), 0);
   const superAdmin = user?.role === "SUPER_ADMIN";

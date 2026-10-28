@@ -13,6 +13,7 @@ import ImageInput from "@/components/ui/ImageInput";
 import Spinner from "@/components/ui/Spinner";
 import { MapPicker } from "@/components/map";
 import { useAsync } from "@/hooks/useAsync";
+import { useSyncEffect } from "@/components/providers/SyncProvider";
 import { reports as reportService } from "@/services/report";
 import { garbagebins } from "@/services/garbagebin";
 import { currentPosition } from "@/lib/image";
@@ -25,7 +26,7 @@ const NEEDS_BIN = ["FULL_BIN", "OVERFLOW", "DAMAGED_BIN"];
 
 function ReportForm() {
   const params = useSearchParams();
-  const mine = useAsync(() => reportService.mine(), [], { initial: [] });
+  const mine = useAsync(() => reportService.mine(), [], { initial: [], sync: ["reports"] });
   const [type, setType] = useState("FULL_BIN");
   const [position, setPosition] = useState(null);
   const [nearby, setNearby] = useState([]);
@@ -59,6 +60,10 @@ function ReportForm() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [position?.latitude, position?.longitude]);
+
+  useSyncEffect(["bins"], () => {
+    if (position) garbagebins.nearby(position.latitude, position.longitude, 1500).then((r) => r.success && setNearby(r.data));
+  });
 
   // Bac passé en paramètre (depuis la carte) : on se positionne dessus
   useEffect(() => {

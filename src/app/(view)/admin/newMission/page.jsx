@@ -46,10 +46,10 @@ function NewMissionForm() {
   const params = useSearchParams();
   const editId = params.get("edit");
 
-  const bins = useAsync(() => withoutDrafts(garbagebins.getAll()), [], { initial: [] });
-  const drivers = useAsync(() => driverService.getAll(), [], { initial: [] });
-  const fleet = useAsync(() => withoutDrafts(vehicleService.getAll()), [], { initial: [] });
-  const requests = useAsync(() => collectionRequests.getAll("PENDING"), [], { initial: [] });
+  const bins = useAsync(() => withoutDrafts(garbagebins.getAll()), [], { initial: [], sync: ["admin:bins"] });
+  const drivers = useAsync(() => driverService.getAll(), [], { initial: [], sync: ["admin:drivers"] });
+  const fleet = useAsync(() => withoutDrafts(vehicleService.getAll()), [], { initial: [], sync: ["admin:vehicles"] });
+  const requests = useAsync(() => collectionRequests.getAll("PENDING"), [], { initial: [], sync: ["admin:collectionRequests"] });
 
   const [form, setForm] = useState({
     purpose: params.get("request") ? "PREMIUMCOLLECTION" : "COLLECTION",

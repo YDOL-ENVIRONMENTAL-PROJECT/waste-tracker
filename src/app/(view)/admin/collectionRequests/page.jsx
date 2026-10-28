@@ -17,7 +17,7 @@ import { formatDate, timeAgo } from "@/lib/format";
 import { MISSION_STATUS, REQUEST_STATUS, SLOTS } from "@/lib/labels";
 
 export default function CollectionRequestsPage() {
-  const list = useAsync(() => collectionRequests.getAll(), [], { initial: [], pollMs: 60_000 });
+  const list = useAsync(() => collectionRequests.getAll(), [], { initial: [], pollMs: 60_000, sync: ["admin:collectionRequests"] });
   const [filter, setFilter] = useState("PENDING");
   const [rejecting, setRejecting] = useState(null);
   const [pending, run] = useAction();

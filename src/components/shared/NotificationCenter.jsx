@@ -31,7 +31,7 @@ const CATEGORY = {
 
 export default function NotificationCenter({ canBroadcast = false }) {
   const { setUnread, refreshUnread } = useSession();
-  const list = useAsync(() => notifications.mine(), [], { initial: [], pollMs: 60_000 });
+  const list = useAsync(() => notifications.mine(), [], { initial: [], pollMs: 60_000, sync: ["notifications"] });
   const [filter, setFilter] = useState("ALL");
   const [, run] = useAction();
 
