@@ -90,11 +90,13 @@ export default function ClientDashboard() {
             </Card>
           ) : (
             <Card className="p-5">
-              <p className="flex items-center gap-2 font-semibold text-slate-900"><Crown size={17} className="text-amber-500" /> Collecte à domicile</p>
+              <p className="flex items-center gap-2 font-semibold text-slate-900"><Crown size={17} className="text-amber-500" /> {user?.type === "PREMIUM" ? "Collecte à domicile" : "Passez premium"}</p>
               <p className="mt-1 text-sm text-slate-500">
-                {sub?.status === "PENDING_PAYMENT" ? "Votre souscription attend la confirmation du paiement." : "Un camion passe chez vous à la fréquence de votre choix. Prix calculé selon la distance."}
+                {sub?.status === "PENDING_PAYMENT" ? "Votre souscription attend la confirmation du paiement."
+                  : user?.type === "PREMIUM" ? "Votre compte est premium : choisissez la fréquence de passage du camion chez vous."
+                  : "La collecte à domicile est réservée aux clients premium. Activation : 10 000 F CFA."}
               </p>
-              <Link href="/client/premium" className="btn-secondary mt-4 w-full">{sub?.status === "PENDING_PAYMENT" ? "Voir ma souscription" : "Calculer mon prix"} <ArrowRight size={15} /></Link>
+              <Link href="/client/premium" className="btn-secondary mt-4 w-full">{sub?.status === "PENDING_PAYMENT" ? "Voir ma souscription" : user?.type === "PREMIUM" ? "Choisir ma collecte" : "Devenir premium"} <ArrowRight size={15} /></Link>
             </Card>
           )}
 

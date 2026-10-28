@@ -249,12 +249,12 @@ function NewMissionForm() {
             <CardHeader title={`${editing ? "3" : "4"}. Chauffeur`} subtitle="Facultatif : une mission sans chauffeur reste « planifiée »." icon={<UserRound size={18} />} />
             <div className="px-5 pb-5">
               {nearest && (
-                <button type="button" onClick={() => set({ driverId: nearest.id, vehicleId: "" })} className="mb-3 flex w-full items-center gap-3 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 p-3.5 text-left text-white shadow-sm">
+                <button type="button" onClick={() => set({ driverId: nearest.id, vehicleId: "" })} className="mb-3 flex w-full items-center gap-3 rounded-xl bg-linear-to-r from-brand-600 to-brand-700 p-3.5 text-left text-white shadow-sm">
                   <Navigation size={18} />
                   <span className="flex-1 text-sm"><span className="block font-semibold">Suggestion : {nearest.firstName} {nearest.lastName}</span><span className="text-brand-100">Véhicule disponible à {nearest.distance.toFixed(1)} km</span></span>
                 </button>
               )}
-              <div className="max-h-[360px] space-y-1.5 overflow-y-auto pr-1">
+              <div className="max-h-90 space-y-1.5 overflow-y-auto pr-1">
                 <button type="button" onClick={() => set({ driverId: "", vehicleId: "" })} className={`w-full rounded-xl border px-3 py-2.5 text-left text-sm ${!form.driverId ? "border-brand-500 bg-brand-50/60 font-medium" : "border-slate-200 text-slate-500"}`}>Affecter plus tard</button>
                 {driverRows.map((d) => {
                   const on = form.driverId === d.id;
@@ -286,7 +286,7 @@ function NewMissionForm() {
 
           <div className="sticky bottom-4 flex gap-2">
             <Link href="/admin/missionList" className="btn-secondary flex-1">Annuler</Link>
-            <button type="submit" className="btn-primary flex-[2]" disabled={submitting}>
+            <button type="submit" className="btn-primary flex-2" disabled={submitting}>
               {submitting && <Spinner />} {editing ? "Enregistrer" : form.driverId ? "Envoyer au chauffeur" : "Planifier la mission"}
             </button>
           </div>

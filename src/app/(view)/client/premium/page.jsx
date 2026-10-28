@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CalendarClock, Check, Clock, Crown, Phone, Route, Truck, Wallet, X } from "lucide-react";
+import { CalendarClock, Check, Clock, Crown, Phone, Route, Wallet, X } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import { Card, CardHeader } from "@/components/ui/Card";
 import { StatusBadge } from "@/components/ui/Badge";
@@ -11,6 +11,8 @@ import { Skeleton } from "@/components/ui/Skeleton";
 import Spinner from "@/components/ui/Spinner";
 import { ConfirmDialog } from "@/components/ui/Modal";
 import { MapPicker } from "@/components/map";
+import PremiumUpgrade from "@/components/premium/PremiumUpgrade";
+import { useSession } from "@/components/providers/SessionProvider";
 import { useAction, useAsync } from "@/hooks/useAsync";
 import { subscriptions as subscriptionService } from "@/services/subscription";
 import { collectionRequests } from "@/services/collectionRequest";
@@ -22,6 +24,7 @@ const FREQUENCIES = [1, 2, 3, 5, 7];
 const DAYS = [["MONDAY", "Lun"], ["TUESDAY", "Mar"], ["WEDNESDAY", "Mer"], ["THURSDAY", "Jeu"], ["FRIDAY", "Ven"], ["SATURDAY", "Sam"], ["SUNDAY", "Dim"]];
 
 export default function PremiumPage() {
+  const { user } = useSession();
   const sub = useAsync(() => subscriptionService.mine(), []);
   const current = sub.data && ["PENDING_PAYMENT", "ACTIVE", "SUSPENDED"].includes(sub.data.status) ? sub.data : null;
 
@@ -34,6 +37,8 @@ export default function PremiumPage() {
         <PendingSubscription sub={current} onChange={() => sub.reload({ silent: true })} />
       ) : current?.status === "SUSPENDED" ? (
         <Card className="p-8 text-center"><Crown size={30} className="mx-auto text-slate-300" /><p className="mt-3 font-semibold text-slate-800">Votre abonnement est suspendu</p><p className="mt-1 text-sm text-slate-500">Contactez YDOL Ingénierie pour le réactiver.</p></Card>
+      ) : user?.type !== "PREMIUM" ? (
+        <PremiumUpgrade onActivated={() => sub.reload({ silent: true })} />
       ) : (
         <Subscribe previous={sub.data} onDone={() => sub.reload({ silent: true })} />
       )}
@@ -78,7 +83,7 @@ function Subscribe({ previous, onDone }) {
     <form onSubmit={subscribe} className="grid gap-6 lg:grid-cols-[1.3fr_1fr]">
       <div className="space-y-6">
         <div className="grid gap-3 sm:grid-cols-3">
-          {[[Truck, "Collecte dédiée", "Un camion vient chez vous"], [CalendarClock, "À votre rythme", "De 1 à 7 passages par semaine"], [Wallet, "Prix transparent", "1 000 F CFA par km parcouru"]].map(([Icon, t, d]) => (
+          {[[Crown, "Compte premium", "Activé : choisissez votre collecte"], [CalendarClock, "À votre rythme", "De 1 à 7 passages par semaine"], [Wallet, "Prix transparent", "1 000 F CFA par km parcouru"]].map(([Icon, t, d]) => (
             <Card key={t} className="p-4"><Icon size={20} className="text-amber-500" /><p className="mt-2 text-sm font-semibold text-slate-900">{t}</p><p className="text-xs text-slate-500">{d}</p></Card>
           ))}
         </div>
