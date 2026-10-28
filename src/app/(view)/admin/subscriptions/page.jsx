@@ -11,12 +11,14 @@ import { ConfirmDialog, DetailRow, Drawer, ReasonDialog } from "@/components/ui/
 import { LeafletMap } from "@/components/map";
 import { useAction, useAsync } from "@/hooks/useAsync";
 import { subscriptions as subscriptionService } from "@/services/subscription";
+import { premium } from "@/services/premium";
 import { notify } from "@/lib/notify";
 import { formatDate, formatDateTime, formatFcfa, includesText } from "@/lib/format";
 import { SLOTS, SUBSCRIPTION_STATUS } from "@/lib/labels";
 
 export default function SubscriptionsPage() {
   const list = useAsync(() => subscriptionService.getAll(), [], { initial: [] });
+  const activations = useAsync(() => premium.activations(), [], { initial: [] });
   const [filter, setFilter] = useState("PENDING_PAYMENT");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(null);
@@ -46,7 +48,7 @@ export default function SubscriptionsPage() {
 
   return (
     <div>
-      <PageHeader title="Abonnements premium" subtitle="Validez les paiements reçus pour activer les abonnements (paiement hors ligne en phase 1)." />
+      <PageHeader title="Abonnements premium" subtitle="Collecte à domicile des clients premium : validez les paiements reçus pour activer les abonnements (paiement hors ligne en phase 1)." />
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
         <StatCard icon={<BadgeCheck size={20} />} label="Paiements à confirmer" value={count("PENDING_PAYMENT")} loading={list.loading} tone="amber" />
         <StatCard icon={<Crown size={20} />} label="Abonnements actifs" value={count("ACTIVE")} loading={list.loading} tone="green" />
@@ -64,6 +66,22 @@ export default function SubscriptionsPage() {
         </div>
         <DataTable columns={columns} rows={rows} loading={list.loading} error={list.error} onRetry={list.reload} onRowClick={setSelected}
           empty={<EmptyState icon={<Crown size={26} />} title="Aucun abonnement" description="Les souscriptions des clients apparaîtront ici." />} />
+      </Card>
+
+      <Card className="mt-6">
+        <div className="border-b border-slate-100 p-4">
+          <p className="font-semibold text-slate-900">Activations de comptes premium</p>
+          <p className="text-sm text-slate-500">Frais d'activation payés par Mobile Money — paiements simulés en phase 1 : aucun encaissement réel.</p>
+        </div>
+        <DataTable rows={activations.data} loading={activations.loading} error={activations.error} onRetry={activations.reload}
+          columns={[
+            { key: "client", header: "Client", render: (a) => <span className="font-medium text-slate-800">{a.clientName}</span> },
+            { key: "reference", header: "Référence", render: (a) => <span className="font-mono text-xs text-slate-600">{a.reference}</span> },
+            { key: "operator", header: "Moyen", hideOnMobile: true, render: (a) => <span className="text-slate-600">{a.operator === "MTN_MOMO" ? "MTN Mobile Money" : "Orange Money"} · {a.phone}</span> },
+            { key: "amount", header: "Montant", render: (a) => <span>{formatFcfa(a.amount)}{a.simulated && <span className="ml-2 chip bg-amber-50 text-amber-700">simulé</span>}</span> },
+            { key: "date", header: "Date", hideOnMobile: true, render: (a) => <span className="text-slate-500">{formatDateTime(a.createdAt)}</span> },
+          ]}
+          empty={<EmptyState compact icon={<Crown size={24} />} title="Aucune activation" description="Les clients qui passent premium apparaîtront ici." />} />
       </Card>
 
       {selected && (

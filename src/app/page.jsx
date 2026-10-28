@@ -1,6 +1,6 @@
 import Link from "next/link";
 import {
-  ArrowRight, Bell, CalendarClock, Camera, CheckCircle2, Crown, Leaf, Map as MapIcon, Megaphone, Recycle, ShoppingBag, Sparkles, Truck,
+  ArrowRight, Bell, Camera, CheckCircle2, Crown, Leaf, Map as MapIcon, Megaphone, Recycle, ShoppingBag, Sparkles, Truck,
 } from "lucide-react";
 import Brand from "@/components/shell/Brand";
 
@@ -43,7 +43,7 @@ export default function Home() {
           <div className="animate-slide-up">
             <span className="chip bg-brand-50 text-brand-800 ring-1 ring-brand-600/15"><Recycle size={13} /> YDOL Ingénierie · Makepe, Douala - Cameroun</span>
             <h1 className="mt-5 text-4xl font-extrabold leading-[1.1] text-slate-900 sm:text-5xl lg:text-6xl">
-              Des quartiers propres, <span className="bg-gradient-to-r from-brand-600 to-emerald-500 bg-clip-text text-transparent">avec vous.</span>
+              Des quartiers propres, <span className="bg-linear-to-r from-brand-600 to-emerald-500 bg-clip-text text-transparent">avec vous.</span>
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600">
               Signalez un bac plein en une photo, suivez sa collecte, faites-vous collecter à domicile et adoptez chaque jour un geste simple pour votre ville.
@@ -59,11 +59,11 @@ export default function Home() {
             </div>
           </div>
           <figure className="relative">
-            <div className="absolute -inset-4 rotate-3 rounded-[2rem] bg-gradient-to-br from-brand-200 to-emerald-100" />
-            <div className="relative overflow-hidden rounded-[2rem] shadow-2xl">
+            <div className="absolute -inset-4 rotate-3 rounded-4xl bg-linear-to-br from-brand-200 to-emerald-100" />
+            <div className="relative overflow-hidden rounded-4xl shadow-2xl">
               <img src="/assets/collecte-douala.jpg" alt="Agents de collecte vidant des poubelles dans un camion, dans une rue de Douala"
-                className="aspect-[4/3] w-full object-cover" />
-              <div className="absolute inset-x-0 top-0 bg-gradient-to-b from-black/45 to-transparent p-4 pb-16">
+                className="aspect-4/3 w-full object-cover" />
+              <div className="absolute inset-x-0 top-0 bg-linear-to-b from-black/45 to-transparent p-4 pb-16">
                 <div className="flex max-w-xs items-center gap-3 rounded-2xl bg-white/95 p-3 shadow-lg backdrop-blur">
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700"><CheckCircle2 size={20} /></span>
                   <div className="min-w-0">
@@ -102,7 +102,7 @@ export default function Home() {
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-5 lg:grid-cols-2">
           <div className="relative order-2 lg:order-1">
             <img src="/assets/create-account-image.png" alt="Une habitante utilise son téléphone"
-              className="aspect-[4/3] w-full rounded-[2rem] object-cover shadow-xl" style={{ objectPosition: "70% center" }} />
+              className="aspect-4/3 w-full rounded-4xl object-cover shadow-xl" style={{ objectPosition: "70% center" }} />
             <div className="absolute -bottom-5 left-5 flex items-center gap-3 rounded-2xl bg-white p-3 pr-5 shadow-lg ring-1 ring-slate-100">
               <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-50 text-red-600"><Megaphone size={18} /></span>
               <div><p className="text-sm font-semibold text-slate-800">Bac plein signalé</p><p className="text-xs text-slate-500">Photo et position envoyées</p></div>
@@ -140,18 +140,18 @@ export default function Home() {
             <Link href="/inscription" className="btn-primary mt-8 px-6 py-3 text-base"><ShoppingBag size={18} /> Découvrir la boutique</Link>
           </div>
           <img src="/assets/login-image.jpeg" alt="Une jeune pousse dans des mains pleines de compost"
-            className="aspect-[4/3] w-full rounded-[2rem] object-cover shadow-xl" style={{ objectPosition: "center 60%" }} />
+            className="aspect-4/3 w-full rounded-4xl object-cover shadow-xl" style={{ objectPosition: "center 60%" }} />
         </div>
       </section>
 
       <section id="premium" className="px-5 py-20">
-        <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 overflow-hidden rounded-[2rem] bg-gradient-to-br from-amber-400 via-orange-400 to-orange-500 p-10 text-white md:flex-row md:p-14">
+        <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 overflow-hidden rounded-4xl bg-linear-to-br from-amber-400 via-orange-400 to-orange-500 p-10 text-white md:flex-row md:p-14">
           <div className="flex-1">
             <p className="flex items-center gap-2 text-sm font-semibold"><Crown size={16} /> Service premium</p>
             <h2 className="mt-3 text-3xl font-bold sm:text-4xl">Vos déchets collectés chez vous.</h2>
-            <p className="mt-3 max-w-lg text-amber-50">Choisissez votre fréquence, de 1 à 7 passages par semaine. Le prix est transparent : 1 000 F CFA par kilomètre parcouru depuis la caserne la plus proche.</p>
+            <p className="mt-3 max-w-lg text-amber-50">Activez votre compte premium (10 000 F CFA, une seule fois), puis choisissez votre fréquence, de 1 à 7 passages par semaine. Le prix des collectes est transparent : 1 000 F CFA par kilomètre parcouru depuis la caserne la plus proche.</p>
           </div>
-          <Link href="/inscription" className="btn bg-white px-6 py-3 text-base text-orange-600 hover:bg-orange-50"><CalendarClock size={18} /> Calculer mon prix</Link>
+          <Link href="/inscription" className="btn bg-white px-6 py-3 text-base text-orange-600 hover:bg-orange-50"><Crown size={18} /> Devenir premium</Link>
         </div>
       </section>
 
