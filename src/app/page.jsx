@@ -158,7 +158,7 @@ export default function Home() {
       <footer className="border-t border-slate-100 py-10">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-5 text-sm text-slate-500 sm:flex-row">
           <Brand />
-          <p>© {new Date().getFullYear()} YDOL Ingénierie — WasteTracker. Projet ENSPY.</p>
+          <p>© {new Date().getFullYear()} YDOL Ingénierie - WasteTracker Project.</p>
         </div>
       </footer>
     </main>
