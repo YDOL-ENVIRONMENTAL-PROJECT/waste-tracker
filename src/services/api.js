@@ -89,12 +89,20 @@ export function fail(context, error, userMessage) {
   };
 }
 
+let hooks = {};
+/** Branché par SyncProvider : prévenir après une modification réussie ou un conflit (409). */
+export function setRequestHooks(next) {
+  hooks = next || {};
+}
+
 /** Appel générique renvoyant { success, data } ou { success: false, error }. */
 export async function request(method, url, { data, params, error } = {}) {
   try {
     const response = await apiClient.request({ method, url, data, params });
+    if (method !== "get") hooks.onMutation?.();
     return { success: true, data: response.data, status: response.status };
   } catch (e) {
+    if (e?.response?.status === 409) hooks.onConflict?.();
     return fail(`${method.toUpperCase()} ${url}`, e, error);
   }
 }

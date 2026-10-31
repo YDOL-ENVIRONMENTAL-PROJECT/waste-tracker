@@ -20,7 +20,7 @@ import { BIN_STATUS } from "@/lib/labels";
 
 export default function GarbageBinListPage() {
   const [archived, setArchived] = useState(false);
-  const list = useAsync(() => (archived ? garbagebins.getArchived() : garbagebins.getAll()), [archived], { initial: [] });
+  const list = useAsync(() => (archived ? garbagebins.getArchived() : garbagebins.getAll()), [archived], { initial: [], sync: ["admin:bins"] });
   const [status, setStatus] = useState("ALL");
   const [town, setTown] = useState("");
   const [query, setQuery] = useState("");

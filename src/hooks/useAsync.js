@@ -1,12 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useSyncEffect } from "@/components/providers/SyncProvider";
 
 /**
  * Charge des données via une fonction de service renvoyant { success, data, error }.
+ * `sync` : domaines de synchronisation (ex. ["orders"], ["admin:bins"]) qui déclenchent un rechargement
+ * discret quand ils changent, y compris depuis un autre appareil.
  * Renvoie { data, loading, error, reload, setData }.
  */
-export function useAsync(fn, deps = [], { initial = null, pollMs } = {}) {
+export function useAsync(fn, deps = [], { initial = null, pollMs, sync } = {}) {
   const [data, setData] = useState(initial);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,6 +36,8 @@ export function useAsync(fn, deps = [], { initial = null, pollMs } = {}) {
     const id = setInterval(() => reload({ silent: true }), pollMs);
     return () => clearInterval(id);
   }, [reload, pollMs]);
+
+  useSyncEffect(sync, () => reload({ silent: true }));
 
   return { data, loading, error, reload, setData };
 }

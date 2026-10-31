@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { auth } from "@/services/auth";
 import { notifications } from "@/services/notification";
 import { LoadingScreen } from "@/components/ui/Loading";
+import { SyncProvider, useSyncEffect } from "@/components/providers/SyncProvider";
+import { fetchCurrentUserProfile } from "@/services/user";
 
 const SessionContext = createContext(null);
 const HEARTBEAT_INTERVAL_MS = 60_000;
@@ -74,9 +76,25 @@ export function SessionProvider({ children }) {
 
   return (
     <SessionContext.Provider value={{ user, setUser, signOut, unread, setUnread, refreshUnread, isAdmin: isAdminRole(user?.role) }}>
-      {children}
+      <SyncProvider>
+        <SessionSync />
+        {children}
+      </SyncProvider>
     </SessionContext.Provider>
   );
+}
+
+/** Profil et compteur de notifications tenus à jour quand ils changent depuis un autre appareil. */
+function SessionSync() {
+  const { setUser, refreshUnread } = useContext(SessionContext);
+  useSyncEffect(["profile"], async () => {
+    const r = await fetchCurrentUserProfile();
+    if (r.success) {
+      setUser(r.data); // fusionné avec l'utilisateur courant et enregistré localement par useAuth
+    }
+  });
+  useSyncEffect(["notifications"], refreshUnread);
+  return null;
 }
 
 export function useSession() {

@@ -19,6 +19,8 @@ function normalizeProfile(profile, authUser) {
     type: profile.type,
     role: profile.role || userRole,
     profilePicture: profile.profilePicture,
+    depotId: profile.depotId,
+    profileVersion: profile.profileVersion,
   };
 }
 

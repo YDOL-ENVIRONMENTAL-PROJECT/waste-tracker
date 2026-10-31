@@ -23,11 +23,11 @@ const VEHICLE_COLOR = { AVAILABLE: "green", UNAVAILABLE: "blue", SLEEPING: "viol
 const REFRESH_MS = 30_000;
 
 export default function AdminMapPage() {
-  const bins = useAsync(() => withoutDrafts(garbagebins.getAll()), [], { initial: [], pollMs: REFRESH_MS });
-  const fleet = useAsync(() => withoutDrafts(vehicleService.getAll()), [], { initial: [], pollMs: REFRESH_MS });
-  const depots = useAsync(() => withoutDrafts(depotService.getAll()), [], { initial: [] });
-  const reports = useAsync(() => reportService.getAll(), [], { initial: [], pollMs: REFRESH_MS });
-  const premium = useAsync(() => subscriptionService.getAll("ACTIVE"), [], { initial: [] });
+  const bins = useAsync(() => withoutDrafts(garbagebins.getAll()), [], { initial: [], pollMs: REFRESH_MS, sync: ["admin:bins"] });
+  const fleet = useAsync(() => withoutDrafts(vehicleService.getAll()), [], { initial: [], pollMs: REFRESH_MS, sync: ["admin:vehicles"] });
+  const depots = useAsync(() => withoutDrafts(depotService.getAll()), [], { initial: [], sync: ["admin:depots"] });
+  const reports = useAsync(() => reportService.getAll(), [], { initial: [], pollMs: REFRESH_MS, sync: ["admin:reports"] });
+  const premium = useAsync(() => subscriptionService.getAll("ACTIVE"), [], { initial: [], sync: ["admin:subscriptions"] });
 
   const [layers, setLayers] = useState({ bins: true, fullOnly: false, vehicles: true, depots: true, reports: true, premium: false });
   const [query, setQuery] = useState("");

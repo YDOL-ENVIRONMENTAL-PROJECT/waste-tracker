@@ -25,7 +25,7 @@ function Shop() {
   const params = useSearchParams();
   const { user } = useSession();
   const cart = useCart();
-  const catalog = useAsync(() => productService.getAll(), [], { initial: [] });
+  const catalog = useAsync(() => productService.getAll(), [], { initial: [], sync: ["products"] });
   const [category, setCategory] = useState("ALL");
   const [query, setQuery] = useState("");
   const [detail, setDetail] = useState(null);
@@ -53,7 +53,7 @@ function Shop() {
     const r = await orderService.create({ ...order, items: cart.items.map((i) => ({ productId: i.id, quantity: i.quantity })) });
     setPlacing(false);
     if (r.success) {
-      cart.clear();
+      cart.reload(); // les produits commandés ont quitté le panier côté serveur
       setCheckout(false);
       setCartOpen(false);
       notify.success(`Commande ${r.data.reference} enregistrée`);

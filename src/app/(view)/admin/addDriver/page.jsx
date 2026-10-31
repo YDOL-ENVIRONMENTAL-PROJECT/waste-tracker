@@ -6,7 +6,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { ArrowLeft, MailCheck, Smartphone } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
 import { Card, CardHeader } from "@/components/ui/Card";
-import { Input, PasswordInput, passwordError } from "@/components/ui/Field";
+import { Input, PasswordInput, SearchSelect, passwordError } from "@/components/ui/Field";
+import { useAsync } from "@/hooks/useAsync";
+import { depots as depotService } from "@/services/depot";
 import Spinner from "@/components/ui/Spinner";
 import { drivers as driverService } from "@/services/driver";
 import { notify } from "@/lib/notify";
@@ -15,7 +17,8 @@ import { TOWNS } from "@/lib/labels";
 function DriverForm() {
   const router = useRouter();
   const id = useSearchParams().get("id");
-  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", town: "Yaoundé", quarter: "", site: "", dateOfBirth: "", password: "" });
+  const [form, setForm] = useState({ firstName: "", lastName: "", email: "", phone: "", town: "Yaoundé", quarter: "", site: "", depotId: "", dateOfBirth: "", password: "" });
+  const depots = useAsync(() => depotService.getAll(), [], { initial: [], sync: ["admin:depots"] });
   const [loading, setLoading] = useState(!!id);
   const [saving, setSaving] = useState(false);
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
@@ -25,7 +28,7 @@ function DriverForm() {
     driverService.getById(id).then((r) => {
       if (r.success) {
         const d = r.data;
-        setForm({ firstName: d.firstName || "", lastName: d.lastName || "", email: d.email || "", phone: d.phone || "", town: d.town || "", quarter: d.quarter || "", site: d.site || "", dateOfBirth: d.dateOfBirth || "", password: "" });
+        setForm({ firstName: d.firstName || "", lastName: d.lastName || "", email: d.email || "", phone: d.phone || "", town: d.town || "", quarter: d.quarter || "", site: d.site || "", depotId: d.depotId || "", dateOfBirth: d.dateOfBirth || "", password: "" });
       } else notify.error(r.error);
       setLoading(false);
     });
@@ -35,6 +38,7 @@ function DriverForm() {
   const submit = async (e) => {
     e.preventDefault();
     if (id && form.password && pwdError) return notify.warning(pwdError);
+    if (!form.depotId) return notify.warning("Choisissez la caserne de rattachement du chauffeur");
     setSaving(true);
     const payload = { ...form, dateOfBirth: form.dateOfBirth || null, password: id ? form.password || null : null };
     const r = id ? await driverService.update(id, payload) : await driverService.create(payload);
@@ -59,7 +63,10 @@ function DriverForm() {
             <Input label="Date de naissance" type="date" value={form.dateOfBirth} onChange={(e) => set({ dateOfBirth: e.target.value })} />
             <Input label="Ville" list="towns" value={form.town} onChange={(e) => set({ town: e.target.value })} />
             <Input label="Quartier" value={form.quarter} onChange={(e) => set({ quarter: e.target.value })} />
-            <Input className="sm:col-span-2" label="Site d'affectation" value={form.site} onChange={(e) => set({ site: e.target.value })} placeholder="Ex. Caserne de Mvan" />
+            <SearchSelect className="sm:col-span-2" label="Caserne de rattachement" required value={form.depotId} onChange={(depotId) => set({ depotId })}
+              placeholder="Tapez pour rechercher une caserne…" emptyText="Aucune caserne validée ne correspond"
+              options={depots.data.filter((d) => !d.draft).map((d) => ({ value: d.id, label: d.name, description: [d.address, d.town].filter(Boolean).join(", ") }))}
+              hint={depots.data.length === 0 ? "Ajoutez d'abord une caserne (menu Casernes)." : "Lieu de travail du chauffeur : obligatoire."} />
             <datalist id="towns">{Object.keys(TOWNS).map((t) => <option key={t} value={t} />)}</datalist>
           </div>
         </Card>

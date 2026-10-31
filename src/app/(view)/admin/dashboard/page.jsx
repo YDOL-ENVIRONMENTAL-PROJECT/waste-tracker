@@ -29,9 +29,9 @@ const VEHICLE_COLORS = {
 
 export default function AdminDashboard() {
   const { user } = useSession();
-  const stats = useAsync(() => dashboard.admin(), [], { pollMs: 60_000 });
-  const today = useAsync(() => missionService.getAll({ date: isoDate() }), [], { initial: [], pollMs: 60_000 });
-  const open = useAsync(() => reportService.getAll("NEW"), [], { initial: [] });
+  const stats = useAsync(() => dashboard.admin(), [], { pollMs: 60_000, sync: ["admin:bins", "admin:vehicles", "admin:missions", "admin:reports", "admin:orders", "admin:subscriptions"] });
+  const today = useAsync(() => missionService.getAll({ date: isoDate() }), [], { initial: [], pollMs: 60_000, sync: ["admin:missions"] });
+  const open = useAsync(() => reportService.getAll("NEW"), [], { initial: [], sync: ["admin:reports"] });
   const d = stats.data || {};
   const loading = stats.loading;
 

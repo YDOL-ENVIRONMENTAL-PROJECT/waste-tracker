@@ -18,7 +18,7 @@ import { DELIVERY_MODE, ORDER_STATUS } from "@/lib/labels";
 const STEPS = ["PENDING", "CONFIRMED", "PREPARING", "READY", "DELIVERED"];
 
 export default function ClientOrdersPage() {
-  const list = useAsync(() => orderService.mine(), [], { initial: [] });
+  const list = useAsync(() => orderService.mine(), [], { initial: [], sync: ["orders"] });
   const [cancelling, setCancelling] = useState(null);
   const [pending, run] = useAction();
 

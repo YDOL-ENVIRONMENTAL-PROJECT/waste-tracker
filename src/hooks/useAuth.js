@@ -96,10 +96,13 @@ export function useAuth() {
     return result;
   };
 
-  /** Met à jour l'utilisateur en mémoire et dans le stockage local (après modification du profil). */
+  /**
+   * Met à jour l'utilisateur en mémoire et dans le stockage local (après modification du profil).
+   * Accepte les champs modifiés ou, comme useState, une fonction recevant l'utilisateur courant.
+   */
   const updateUser = (patch) => {
     setUser((prev) => {
-      const next = { ...prev, ...patch };
+      const next = { ...prev, ...(typeof patch === "function" ? patch(prev) : patch) };
       if (typeof window !== "undefined") {
         localStorage.setItem("user", JSON.stringify(next));
       }

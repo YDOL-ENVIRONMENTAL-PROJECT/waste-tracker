@@ -23,7 +23,7 @@ import { CAPSULE_AUDIENCE, CAPSULE_FORMAT, CAPSULE_STATUS, CAPSULE_THEMES } from
 const EMPTY = { title: "", keyMessage: "", description: "", theme: CAPSULE_THEMES[0], format: "VIDEO", mediaUrl: "", slides: [], thumbnail: "", durationSeconds: "", audience: "ALL", publishDate: isoDate(), status: "SCHEDULED" };
 
 export default function AwarenessAdminPage() {
-  const list = useAsync(() => awareness.getAll(), [], { initial: [] });
+  const list = useAsync(() => awareness.getAll(), [], { initial: [], sync: ["admin:awareness"] });
   const stats = useAsync(() => awareness.stats(), []);
   const [filter, setFilter] = useState("ALL");
   const [editing, setEditing] = useState(null);

@@ -17,7 +17,7 @@ import { formatDate } from "@/lib/format";
 import { CAPSULE_FORMAT } from "@/lib/labels";
 
 export default function ClientAwarenessPage() {
-  const library = useAsync(() => awareness.library(), [], { initial: [] });
+  const library = useAsync(() => awareness.library(), [], { initial: [], sync: ["awareness"] });
   const [theme, setTheme] = useState("ALL");
   const [open, setOpen] = useState(null);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Camera, KeyRound, Trash2, UserRound } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
@@ -11,7 +11,7 @@ import Avatar from "@/components/ui/Avatar";
 import Spinner from "@/components/ui/Spinner";
 import { Modal } from "@/components/ui/Modal";
 import { useSession } from "@/components/providers/SessionProvider";
-import { updateProfile } from "@/services/user";
+import { fetchCurrentUserProfile, updateProfile } from "@/services/user";
 import { auth } from "@/services/auth";
 import { compressImage } from "@/lib/image";
 import { notify } from "@/lib/notify";
@@ -34,12 +34,30 @@ export default function ProfilePage() {
   const [deletePwd, setDeletePwd] = useState("");
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
+  // Profil modifié depuis un autre appareil (application mobile) : le formulaire reprend les nouvelles valeurs
+  useEffect(() => {
+    if (!user) return;
+    setForm({
+      firstName: user.firstName || "", lastName: user.lastName || "", name: user.name || "", email: user.email || "",
+      phone: user.phone || "", town: user.town || "", quarter: user.quarter || "", site: user.site || "",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.profileVersion]);
+
   const save = async (patch) => {
     setSaving(true);
     const emailChanged = patch.email && patch.email.toLowerCase() !== user.email;
-    const r = await updateProfile(patch);
+    // expectedProfileVersion : le serveur refuse (409) si le profil a changé ailleurs depuis son chargement
+    const r = await updateProfile({ ...patch, expectedProfileVersion: user.profileVersion });
     setSaving(false);
-    if (!r.success) return notify.error(r.error);
+    if (!r.success) {
+      notify.error(r.error);
+      if (r.status === 409) {
+        const fresh = await fetchCurrentUserProfile();
+        if (fresh.success) setUser(fresh.data);
+      }
+      return;
+    }
     setUser(r.data);
     if (emailChanged) {
       notify.success("Adresse e-mail modifiée : reconnectez-vous avec votre nouvelle adresse");

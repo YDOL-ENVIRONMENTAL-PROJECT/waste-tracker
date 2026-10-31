@@ -25,7 +25,7 @@ const DAYS = [["MONDAY", "Lun"], ["TUESDAY", "Mar"], ["WEDNESDAY", "Mer"], ["THU
 
 export default function PremiumPage() {
   const { user } = useSession();
-  const sub = useAsync(() => subscriptionService.mine(), []);
+  const sub = useAsync(() => subscriptionService.mine(), [], { sync: ["subscription", "profile"] });
   const current = sub.data && ["PENDING_PAYMENT", "ACTIVE", "SUSPENDED"].includes(sub.data.status) ? sub.data : null;
 
   return (
@@ -197,7 +197,7 @@ function PendingSubscription({ sub, onChange }) {
 }
 
 function ActiveSubscription({ sub, onChange }) {
-  const requests = useAsync(() => collectionRequests.mine(), [], { initial: [] });
+  const requests = useAsync(() => collectionRequests.mine(), [], { initial: [], sync: ["subscription"] });
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const [form, setForm] = useState({ requestedDate: isoDate(tomorrow), slot: sub.preferredSlot || "MORNING", comment: "" });

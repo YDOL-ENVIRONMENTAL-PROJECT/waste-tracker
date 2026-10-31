@@ -16,7 +16,7 @@ import { formatDateTime, formatFcfa, includesText, timeAgo } from "@/lib/format"
 import { DELIVERY_MODE, ORDER_NEXT, ORDER_STATUS } from "@/lib/labels";
 
 export default function OrdersPage() {
-  const list = useAsync(() => orderService.getAll(), [], { initial: [], pollMs: 60_000 });
+  const list = useAsync(() => orderService.getAll(), [], { initial: [], pollMs: 60_000, sync: ["admin:orders"] });
   const [filter, setFilter] = useState("PENDING");
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(null);
