@@ -50,7 +50,11 @@ export default function DriverListPage() {
 
   const act = (fn, msg) => run(async () => {
     const r = await fn();
-    if (r.success) { notify.success(msg); setConfirm(null); list.reload({ silent: true }); } else notify.error(r.error);
+    if (r.success) {
+      if (r.data?.activationEmailSent === false) notify.warning("L'e-mail n'a pas pu partir : vérifiez la configuration d'envoi du serveur.");
+      else notify.success(msg);
+      setConfirm(null); list.reload({ silent: true });
+    } else notify.error(r.error);
   });
 
   const columns = [
