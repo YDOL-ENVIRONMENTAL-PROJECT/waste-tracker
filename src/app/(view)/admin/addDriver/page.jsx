@@ -44,7 +44,8 @@ function DriverForm() {
     const r = id ? await driverService.update(id, payload) : await driverService.create(payload);
     setSaving(false);
     if (r.success) {
-      notify.success(id ? "Chauffeur mis à jour" : `Compte créé : un e-mail d'activation a été envoyé à ${r.data.email}`);
+      if (!id && r.data.activationEmailSent === false) notify.warning(`Compte créé, mais l'e-mail n'a pas pu partir. Renvoyez le lien depuis la liste une fois l'envoi rétabli.`);
+      else notify.success(id ? "Chauffeur mis à jour" : `Compte créé : un e-mail d'activation a été envoyé à ${r.data.email}`);
       router.push("/admin/driverList");
     } else notify.error(r.error);
   };
