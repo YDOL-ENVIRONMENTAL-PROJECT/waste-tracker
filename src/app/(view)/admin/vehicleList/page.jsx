@@ -9,6 +9,7 @@ import { StatusBadge } from "@/components/ui/Badge";
 import { FilterPills, SearchInput } from "@/components/ui/Table";
 import EmptyState, { ErrorState } from "@/components/ui/EmptyState";
 import { CardsSkeleton } from "@/components/ui/Skeleton";
+import { ConfirmDialog } from "@/components/ui/Modal";
 import CsvImportModal from "@/components/shared/CsvImportModal";
 import { ApprovalActions, DraftBadge } from "@/components/approval/Approval";
 import { useAction, useAsync } from "@/hooks/useAsync";
@@ -21,7 +22,6 @@ import { VEHICLE_STATUS } from "@/lib/labels";
 
 const CSV_COLUMNS = [
   { key: "immatriculation", label: "Immatriculation", required: true },
-  { key: "deviceId", label: "Identifiant du téléphone de service" },
   { key: "name", label: "Nom d'usage" },
   { key: "brand", label: "Marque" },
   { key: "modele", label: "Modèle" },
@@ -37,11 +37,12 @@ export default function VehicleListPage() {
   const [query, setQuery] = useState("");
   const [importOpen, setImportOpen] = useState(false);
   const [importDraft, setImportDraft] = useState(false);
+  const [releasing, setReleasing] = useState(null);
   const [pending, run] = useAction();
 
   const rows = useMemo(() => list.data
     .filter((v) => status === "ALL" || (status === "DRAFT" ? v.draft : !v.draft && v.status === status))
-    .filter((v) => includesText(`${v.immatriculation} ${v.name} ${v.brand} ${v.modele} ${v.driverFullName} ${v.deviceId}`, query)), [list.data, status, query]);
+    .filter((v) => includesText(`${v.immatriculation} ${v.name} ${v.brand} ${v.modele} ${v.driverFullName}`, query)), [list.data, status, query]);
   const count = (s) => list.data.filter((v) => !v.draft && v.status === s).length;
 
   const setVehicleStatus = (v, s) => run(async () => {
@@ -53,7 +54,7 @@ export default function VehicleListPage() {
 
   return (
     <div>
-      <PageHeader title="Véhicules" subtitle="Chaque véhicule embarque un téléphone de service : le chauffeur qui s'y connecte est relié automatiquement au véhicule."
+      <PageHeader title="Véhicules" subtitle="Chaque véhicule a un téléphone de service, associé depuis l'application Chauffeur : le chauffeur qui s'y connecte est relié automatiquement au véhicule."
         actions={<>
           <button className="btn-secondary" onClick={() => setImportOpen(true)}><FileUp size={16} /> Importer (CSV)</button>
           <Link href="/admin/addVehicle" className="btn-primary"><Plus size={16} /> Ajouter un véhicule</Link>
@@ -64,10 +65,10 @@ export default function VehicleListPage() {
           ...["AVAILABLE", "UNAVAILABLE", "BROKEN_DOWN", "OUT_OF_SERVICE"].map((s) => ({ value: s, label: VEHICLE_STATUS[s].label, count: count(s) })),
           { value: "DRAFT", label: "Brouillons", count: list.data.filter((v) => v.draft).length },
         ]} />
-        <SearchInput value={query} onChange={setQuery} placeholder="Immatriculation, téléphone, chauffeur…" className="lg:w-72" />
+        <SearchInput value={query} onChange={setQuery} placeholder="Immatriculation, chauffeur…" className="lg:w-72" />
       </div>
       {list.loading ? <CardsSkeleton /> : list.error ? <ErrorState message={list.error} onRetry={list.reload} /> : rows.length === 0 ? (
-        <Card><EmptyState icon={<Truck size={26} />} title="Aucun véhicule" description="Ajoutez vos camions et l'identifiant de leur téléphone de service." action={<Link href="/admin/addVehicle" className="btn-primary"><Plus size={16} /> Ajouter un véhicule</Link>} /></Card>
+        <Card><EmptyState icon={<Truck size={26} />} title="Aucun véhicule" description="Ajoutez vos camions et associez leur téléphone depuis l'application Chauffeur." action={<Link href="/admin/addVehicle" className="btn-primary"><Plus size={16} /> Ajouter un véhicule</Link>} /></Card>
       ) : (
         <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
           {rows.map((v) => (
@@ -85,7 +86,9 @@ export default function VehicleListPage() {
                   <Link href={`/admin/addVehicle?id=${v.id}`} className="rounded-lg p-2 text-slate-500 hover:bg-slate-100" title="Modifier"><Pencil size={16} /></Link>
                 </div>
                 <div className="mt-3 space-y-1.5 text-sm text-slate-600">
-                  <p className="flex items-center gap-2"><Smartphone size={14} className="text-slate-400" />{v.deviceId || <span className="italic text-amber-700">Téléphone non renseigné</span>}</p>
+                  <p className="flex items-center gap-2"><Smartphone size={14} className="text-slate-400" />{v.deviceId
+                    ? <span className="flex flex-1 items-center justify-between gap-2">Téléphone associé<button className="text-xs font-medium text-red-600 hover:underline" onClick={() => setReleasing(v)}>Dissocier</button></span>
+                    : <span className="italic text-amber-700">Aucun téléphone associé</span>}</p>
                   <p className="flex items-center gap-2"><UserRound size={14} className="text-slate-400" />{v.driverFullName ? <>{v.driverFullName} <span className="text-xs text-slate-400">(connecté)</span></> : <span className="italic text-slate-400">Aucun chauffeur connecté</span>}</p>
                   <p className="flex items-center gap-2"><Building2 size={14} className="text-slate-400" />{v.depotName || <span className="italic text-slate-400">Sans caserne</span>}</p>
                   <p className="flex items-center gap-2"><Gauge size={14} className="text-slate-400" />{v.maxCapacity ? `${v.maxCapacity} t` : "Capacité —"} · position {v.lastPositionAt ? timeAgo(v.lastPositionAt) : "inconnue"}</p>
@@ -104,13 +107,20 @@ export default function VehicleListPage() {
         </div>
       )}
 
+      <ConfirmDialog open={!!releasing} onClose={() => setReleasing(null)} danger pending={pending} title="Dissocier le téléphone ?" confirmLabel="Dissocier"
+        message={`Le téléphone de ${releasing?.immatriculation} reviendra à l'écran de configuration et le chauffeur connecté sera déconnecté. Le véhicule pourra être associé à un autre téléphone.`}
+        onConfirm={() => run(async () => {
+          const r = await vehicleService.releaseDevice(releasing.id);
+          if (r.success) { notify.success("Téléphone dissocié"); setReleasing(null); list.reload({ silent: true }); } else notify.error(r.error);
+        })} />
+
       <CsvImportModal open={importOpen} onClose={() => setImportOpen(false)} title="Importer des véhicules"
         description={user?.role === "SUPER_ADMIN" ? "Les véhicules importés sont créés directement, ou en brouillons si vous le choisissez." : "Les véhicules importés seront des brouillons à faire valider par un super administrateur."}
-        columns={CSV_COLUMNS} templateName="modele_vehicules.csv" example={["LT-123-AB", "TEL-001", "Benne 01", "Renault", "D-Wide", "12", depots.data[0]?.name || "Caserne de Mvan"]}
+        columns={CSV_COLUMNS} templateName="modele_vehicules.csv" example={["LT-123-AB", "Benne 01", "Renault", "D-Wide", "12", depots.data[0]?.name || "Caserne de Mvan"]}
         extra={user?.role === "SUPER_ADMIN" && (
           <label className="flex items-center gap-2 text-sm text-slate-700"><input type="checkbox" className="accent-brand-600" checked={importDraft} onChange={(e) => setImportDraft(e.target.checked)} /> Importer en brouillons</label>
         )}
-        toRow={(r) => ({ immatriculation: r.immatriculation, deviceId: r.deviceid || null, name: r.name || null, brand: r.brand || null,
+        toRow={(r) => ({ immatriculation: r.immatriculation, name: r.name || null, brand: r.brand || null,
           modele: r.modele || null, maxCapacity: r.maxcapacity ? Number(r.maxcapacity.replace(",", ".")) : null, depotId: depotId(r.depot) })}
         onImport={(rows) => vehicleService.importMany(rows, importDraft)} onDone={() => list.reload({ silent: true })} />
     </div>

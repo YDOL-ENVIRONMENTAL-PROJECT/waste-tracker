@@ -14,6 +14,7 @@ import { useAsync } from "@/hooks/useAsync";
 import { vehicles as vehicleService } from "@/services/vehicle";
 import { depots as depotService } from "@/services/depot";
 import { notify } from "@/lib/notify";
+import { formatDateTime } from "@/lib/format";
 import { VEHICLE_STATUS } from "@/lib/labels";
 
 function VehicleForm() {
@@ -21,7 +22,7 @@ function VehicleForm() {
   const id = useSearchParams().get("id");
   const depots = useAsync(() => depotService.getAll(), [], { initial: [] });
   const fleet = useAsync(() => vehicleService.getAll(), [], { initial: [] });
-  const [form, setForm] = useState({ immatriculation: "", name: "", brand: "", modele: "", maxCapacity: "", photo: "", deviceId: "", depotId: "", status: "AVAILABLE" });
+  const [form, setForm] = useState({ immatriculation: "", name: "", brand: "", modele: "", maxCapacity: "", photo: "", depotId: "", status: "AVAILABLE" });
   const [saving, setSaving] = useState(false);
   const set = (patch) => setForm((f) => ({ ...f, ...patch }));
 
@@ -30,7 +31,7 @@ function VehicleForm() {
     if (editing) {
       setForm({
         immatriculation: editing.immatriculation, name: editing.name || "", brand: editing.brand || "", modele: editing.modele || "",
-        maxCapacity: editing.maxCapacity || "", photo: editing.photo || "", deviceId: editing.deviceId || "", depotId: editing.depotId || "", status: editing.status,
+        maxCapacity: editing.maxCapacity || "", photo: editing.photo || "", depotId: editing.depotId || "", status: editing.status,
       });
     }
   }, [editing?.id]);
@@ -43,7 +44,7 @@ function VehicleForm() {
     const payload = {
       immatriculation: form.immatriculation, name: form.name || null, brand: form.brand || null, modele: form.modele || null,
       maxCapacity: form.maxCapacity ? Number(form.maxCapacity) : null, photo: form.photo || null,
-      deviceId: form.deviceId || null, depotId: form.depotId || null, status: form.status, saveAsDraft,
+      depotId: form.depotId || null, status: form.status, saveAsDraft,
       // Un nouveau véhicule démarre à sa caserne tant que le téléphone n'a pas transmis de position.
       ...(!id && depot ? { latitude: depot.latitude, longitude: depot.longitude } : {}),
     };
@@ -80,8 +81,11 @@ function VehicleForm() {
           <Card>
             <CardHeader title="Téléphone de service" icon={<Smartphone size={18} />} />
             <div className="space-y-3 px-5 pb-5">
-              <Input label="Identifiant du téléphone" value={form.deviceId} onChange={(e) => set({ deviceId: e.target.value })} placeholder="Ex. TEL-001 (affiché dans l'application chauffeur)"
-                hint="Le chauffeur qui se connecte depuis ce téléphone est relié automatiquement à ce véhicule ; il en est détaché à sa déconnexion." />
+              {editing?.deviceId ? (
+                <p className="text-sm text-slate-700">Téléphone associé{editing.deviceAssociatedBy ? ` par ${editing.deviceAssociatedBy}` : ""}{editing.deviceAssociatedAt ? ` le ${formatDateTime(editing.deviceAssociatedAt)}` : ""}. Pour le remplacer, dissociez-le depuis la liste des véhicules.</p>
+              ) : (
+                <p className="text-sm text-slate-600">Le téléphone s'associe depuis l'application Chauffeur : à sa première ouverture, un administrateur s'identifie et choisit ce véhicule parmi ceux qui n'ont pas de téléphone.</p>
+              )}
               {editing?.driverFullName && <p className="rounded-xl bg-brand-50 px-3 py-2 text-sm text-brand-900">Chauffeur actuellement connecté : <b>{editing.driverFullName}</b></p>}
             </div>
           </Card>

@@ -19,7 +19,7 @@ const KINDS = [
   { key: "bins", title: "Bacs à ordures", icon: Recycle, service: garbagebins, edit: (x) => `/admin/addGarbageBin?id=${x.id}`,
     name: (x) => x.code, detail: (x) => [x.quarter, x.town].filter(Boolean).join(", "), label: (x) => `le bac ${x.code}` },
   { key: "vehicles", title: "Véhicules", icon: Truck, service: vehicles, edit: (x) => `/admin/addVehicle?id=${x.id}`,
-    name: (x) => x.immatriculation, detail: (x) => [x.name, x.brand, x.deviceId && `tél. ${x.deviceId}`].filter(Boolean).join(" · "), label: (x) => `le véhicule ${x.immatriculation}` },
+    name: (x) => x.immatriculation, detail: (x) => [x.name, x.brand, x.depotName].filter(Boolean).join(" · "), label: (x) => `le véhicule ${x.immatriculation}` },
   { key: "depots", title: "Casernes", icon: Building2, service: depots, edit: () => "/admin/depots",
     name: (x) => x.name, detail: (x) => [x.address, x.town].filter(Boolean).join(", "), label: (x) => `la caserne ${x.name}` },
   { key: "products", title: "Produits", icon: Boxes, service: products, edit: (x) => `/admin/addProduct?id=${x.id}`,

@@ -9,6 +9,7 @@ export const vehicles = {
   update: (id, data) => put(`/vehicle/${id}`, data, { error: "Impossible de modifier ce véhicule." }),
   setStatus: (id, status) =>
     put(`/vehicle/${id}/status`, null, { params: { status }, error: "Impossible de changer le statut." }),
+  releaseDevice: (id) => put(`/vehicle/${id}/release-device`, null, { error: "Impossible de dissocier ce téléphone." }),
   importMany: (rows, saveAsDraft) => post("/vehicle/import", { rows, saveAsDraft }, { error: "Import impossible." }),
   approve: (id) => put(`/vehicle/${id}/approve`, null, { error: "Impossible de valider ce véhicule." }),
   remove: (id) => del(`/vehicle/${id}`, { error: "Impossible de supprimer ce véhicule." }),
